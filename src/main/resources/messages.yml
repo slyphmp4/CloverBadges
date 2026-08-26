@@ -6,6 +6,8 @@ messages:
     - "&FFFFFF/badge list &8— &B8B8B8твои бейджи"
   help-select:
     - "&FFFFFF/badge select <id|none> &8— &B8B8B8выбрать бейдж"
+  help-off:
+    - "&FFFFFF/badge off &8— &B8B8B8скрыть активный бейдж"
   help-info:
     - "&FFFFFF/badge info &8— &B8B8B8информация о себе"
   help-admin-info:
