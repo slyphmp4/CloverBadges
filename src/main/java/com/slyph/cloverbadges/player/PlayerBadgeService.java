@@ -14,7 +14,9 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -38,7 +40,7 @@ public final class PlayerBadgeService implements BadgeApi {
         PlayerBadgeData playerData = data.computeIfAbsent(player.getUniqueId(), uuid -> {
             long firstPlayed = player.getFirstPlayed();
             long firstSeen = firstPlayed > 0L ? firstPlayed : System.currentTimeMillis();
-            return new PlayerBadgeData(uuid, firstSeen, null, false, Map.of());
+            return new PlayerBadgeData(uuid, firstSeen, null, false, Map.of(), Set.of());
         });
 
         if (playerData.firstSeen() <= 0L) {
@@ -54,6 +56,7 @@ public final class PlayerBadgeService implements BadgeApi {
         PlayerBadgeData playerData = ensure(player);
         long expiresAt = duration.permanent() ? 0L : System.currentTimeMillis() + duration.millis();
         playerData.grants().put(id, new BadgeGrant(expiresAt));
+        playerData.suppressedAutomaticBadges().remove(id);
 
         if (plugin.getConfig().getBoolean("selection.auto-select-first-granted-badge", true)
                 && playerData.selectedBadge() == null
@@ -65,15 +68,27 @@ public final class PlayerBadgeService implements BadgeApi {
 
     public synchronized boolean revoke(OfflinePlayer player, String badgeId) {
         String id = badgeId.toLowerCase();
-        PlayerBadgeData playerData = ensure(player);
-        boolean removed = playerData.grants().remove(id) != null;
-        if (removed && id.equalsIgnoreCase(playerData.selectedBadge()) && !hasBadge(player, id)) {
-            playerData.selectedBadge(null);
+        if (registry.get(id).isEmpty()) {
+            return false;
         }
-        if (removed) {
+
+        boolean hadBadge = hasBadge(player, id);
+        PlayerBadgeData playerData = ensure(player);
+        boolean changed = playerData.grants().remove(id) != null;
+
+        if (id.equals(newcomerBadgeId()) && isNewcomerEligibleByTime(player)) {
+            changed |= playerData.suppressedAutomaticBadges().add(id);
+        }
+
+        if (id.equalsIgnoreCase(playerData.selectedBadge()) && !hasBadge(player, id)) {
+            playerData.selectedBadge(null);
+            changed = true;
+        }
+
+        if (changed) {
             saveIfConfigured();
         }
-        return removed;
+        return hadBadge || changed;
     }
 
     public synchronized boolean select(OfflinePlayer player, String badgeId) {
@@ -97,46 +112,88 @@ public final class PlayerBadgeService implements BadgeApi {
 
     public synchronized void enableAutomaticSelection(OfflinePlayer player) {
         PlayerBadgeData playerData = ensure(player);
+        playerData.selectedBadge(null);
         playerData.selectionDisabled(false);
         saveIfConfigured();
     }
 
     @Override
-    public Optional<String> getActiveBadgeId(OfflinePlayer player) {
+    public List<String> getActiveBadgeIds(OfflinePlayer player) {
         PlayerBadgeData playerData = ensure(player);
         if (playerData.selectionDisabled()) {
-            return Optional.empty();
+            return List.of();
         }
 
-        String selected = playerData.selectedBadge();
-        if (selected != null && hasBadge(player, selected)) {
-            return Optional.of(selected);
+        List<String> owned = getOwnedBadgeIds(player).stream()
+                .filter(id -> isDisplayEnabledForSource(player, id))
+                .sorted(badgeComparator())
+                .toList();
+        if (owned.isEmpty()) {
+            return List.of();
         }
 
-        if (plugin.getConfig().getBoolean("newcomer.auto-display", true) && isNewcomer(player)) {
-            String newcomerId = newcomerBadgeId();
-            if (registry.contains(newcomerId)) {
-                return Optional.of(newcomerId);
+        int maxBadges = maxVisibleBadges();
+        if (owned.size() <= maxBadges) {
+            return List.copyOf(owned);
+        }
+
+        String preferred = playerData.selectedBadge();
+        if (preferred == null || !owned.contains(preferred.toLowerCase())) {
+            return List.copyOf(owned.subList(0, maxBadges));
+        }
+
+        LinkedHashSet<String> selected = new LinkedHashSet<>();
+        selected.add(preferred.toLowerCase());
+        for (String id : owned) {
+            if (selected.size() >= maxBadges) {
+                break;
             }
+            selected.add(id);
         }
-        return Optional.empty();
+
+        return selected.stream()
+                .sorted(badgeComparator())
+                .toList();
+    }
+
+    @Override
+    public Optional<String> getActiveBadgeId(OfflinePlayer player) {
+        List<String> active = getActiveBadgeIds(player);
+        return active.isEmpty() ? Optional.empty() : Optional.of(active.getFirst());
     }
 
     @Override
     public Component getActiveBadgeComponent(OfflinePlayer player) {
-        return getActiveBadgeId(player)
-                .flatMap(registry::get)
-                .map(BadgeDefinition::text)
-                .map(ColorUtil::component)
-                .orElse(Component.empty());
+        List<String> active = getActiveBadgeIds(player);
+        if (active.isEmpty()) {
+            return Component.empty();
+        }
+
+        Component separator = ColorUtil.component(plugin.getConfig().getString("display.separator", " "));
+        Component result = Component.empty();
+        boolean first = true;
+        for (String id : active) {
+            if (!first) {
+                result = result.append(separator);
+            }
+            result = result.append(ColorUtil.component(getBadgeText(id)));
+            first = false;
+        }
+        return result;
     }
 
     @Override
     public String getActiveBadgeLegacy(OfflinePlayer player) {
-        return getActiveBadgeId(player)
-                .flatMap(registry::get)
-                .map(BadgeDefinition::text)
+        List<String> active = getActiveBadgeIds(player);
+        if (active.isEmpty()) {
+            return plugin.getConfig().getString("placeholders.empty-value", "");
+        }
+
+        String separator = ColorUtil.legacySection(plugin.getConfig().getString("display.separator", " "));
+        return active.stream()
+                .map(this::getBadgeText)
                 .map(ColorUtil::legacySection)
+                .reduce((left, right) -> left + separator + right)
                 .orElse(plugin.getConfig().getString("placeholders.empty-value", ""));
     }
 
@@ -151,7 +208,8 @@ public final class PlayerBadgeService implements BadgeApi {
             return false;
         }
 
-        if (id.equals(newcomerBadgeId()) && isNewcomer(player)) {
+        BadgeGrant grant = ensure(player).grants().get(id);
+        if (grant != null && !grant.expired(System.currentTimeMillis())) {
             return true;
         }
 
@@ -163,18 +221,17 @@ public final class PlayerBadgeService implements BadgeApi {
             }
         }
 
-        BadgeGrant grant = ensure(player).grants().get(id);
-        return grant != null && !grant.expired(System.currentTimeMillis());
+        return id.equals(newcomerBadgeId()) && isNewcomer(player);
     }
 
     @Override
     public Set<String> getOwnedBadgeIds(OfflinePlayer player) {
-        Set<String> result = new LinkedHashSet<>();
-        for (BadgeDefinition definition : registry.all()) {
-            if (hasBadge(player, definition.id())) {
-                result.add(definition.id());
-            }
-        }
+        LinkedHashSet<String> result = new LinkedHashSet<>();
+        registry.all().stream()
+                .filter(definition -> hasBadge(player, definition.id()))
+                .sorted(Comparator.comparingInt(BadgeDefinition::priority).reversed().thenComparing(BadgeDefinition::id))
+                .map(BadgeDefinition::id)
+                .forEach(result::add);
         return Collections.unmodifiableSet(result);
     }
 
@@ -185,8 +242,9 @@ public final class PlayerBadgeService implements BadgeApi {
         }
         String id = badgeId.toLowerCase();
 
-        if (id.equals(newcomerBadgeId()) && isNewcomer(player)) {
-            return getNewcomerRemainingMillis(player);
+        BadgeGrant grant = ensure(player).grants().get(id);
+        if (grant != null && !grant.expired(System.currentTimeMillis())) {
+            return grant.remaining(System.currentTimeMillis());
         }
 
         BadgeDefinition definition = registry.get(id).orElseThrow();
@@ -197,11 +255,10 @@ public final class PlayerBadgeService implements BadgeApi {
             }
         }
 
-        BadgeGrant grant = ensure(player).grants().get(id);
-        if (grant == null || grant.expired(System.currentTimeMillis())) {
-            return 0L;
+        if (id.equals(newcomerBadgeId()) && isNewcomer(player)) {
+            return getNewcomerRemainingMillis(player);
         }
-        return grant.remaining(System.currentTimeMillis());
+        return 0L;
     }
 
     @Override
@@ -209,22 +266,19 @@ public final class PlayerBadgeService implements BadgeApi {
         if (!plugin.getConfig().getBoolean("newcomer.enabled", true)) {
             return false;
         }
-        long remaining = getNewcomerRemainingMillis(player);
-        return remaining > 0L;
+        PlayerBadgeData playerData = ensure(player);
+        if (playerData.suppressedAutomaticBadges().contains(newcomerBadgeId())) {
+            return false;
+        }
+        return isNewcomerEligibleByTime(player);
     }
 
     @Override
     public long getNewcomerRemainingMillis(OfflinePlayer player) {
-        if (!plugin.getConfig().getBoolean("newcomer.enabled", true)) {
+        if (!isNewcomer(player)) {
             return 0L;
         }
-        DurationParser.ParsedDuration duration = DurationParser.parse(plugin.getConfig().getString("newcomer.duration", "7d"))
-                .orElse(new DurationParser.ParsedDuration(false, 604_800_000L));
-        if (duration.permanent()) {
-            return Long.MAX_VALUE;
-        }
-        long firstSeen = ensure(player).firstSeen();
-        return Math.max(0L, firstSeen + duration.millis() - System.currentTimeMillis());
+        return getNewcomerRawRemainingMillis(player);
     }
 
     public String getBadgeName(String badgeId) {
@@ -235,12 +289,19 @@ public final class PlayerBadgeService implements BadgeApi {
         return registry.get(badgeId).map(BadgeDefinition::text).orElse("");
     }
 
+    public int getBadgePriority(String badgeId) {
+        return registry.get(badgeId).map(BadgeDefinition::priority).orElse(0);
+    }
+
     public Optional<BadgeDefinition> getDefinition(String badgeId) {
         return registry.get(badgeId);
     }
 
     public Collection<String> allBadgeIds() {
-        return registry.ids();
+        return registry.all().stream()
+                .sorted(Comparator.comparingInt(BadgeDefinition::priority).reversed().thenComparing(BadgeDefinition::id))
+                .map(BadgeDefinition::id)
+                .toList();
     }
 
     public String formatRemaining(OfflinePlayer player, String badgeId) {
@@ -303,17 +364,71 @@ public final class PlayerBadgeService implements BadgeApi {
         if (playerData == null || registry.get(badgeId).isEmpty()) {
             return false;
         }
-        BadgeGrant grant = playerData.grants().get(badgeId.toLowerCase());
+
+        String id = badgeId.toLowerCase();
+        BadgeGrant grant = playerData.grants().get(id);
         if (grant != null && !grant.expired(System.currentTimeMillis())) {
             return true;
         }
+
         OfflinePlayer player = plugin.getServer().getOfflinePlayer(uuid);
-        if (badgeId.equalsIgnoreCase(newcomerBadgeId()) && isNewcomer(player)) {
+        BadgeDefinition definition = registry.get(id).orElseThrow();
+        Player online = player.getPlayer();
+        if (definition.hasPermissionSource() && online != null && online.hasPermission(definition.permission())) {
             return true;
         }
-        BadgeDefinition definition = registry.get(badgeId).orElseThrow();
+
+        return id.equals(newcomerBadgeId())
+                && !playerData.suppressedAutomaticBadges().contains(id)
+                && isNewcomerEligibleByTime(player);
+    }
+
+    private boolean isDisplayEnabledForSource(OfflinePlayer player, String badgeId) {
+        String id = badgeId.toLowerCase();
+        if (!id.equals(newcomerBadgeId()) || plugin.getConfig().getBoolean("newcomer.auto-display", true)) {
+            return true;
+        }
+
+        PlayerBadgeData playerData = ensure(player);
+        BadgeGrant grant = playerData.grants().get(id);
+        if (grant != null && !grant.expired(System.currentTimeMillis())) {
+            return true;
+        }
+
+        BadgeDefinition definition = registry.get(id).orElse(null);
         Player online = player.getPlayer();
-        return definition.hasPermissionSource() && online != null && online.hasPermission(definition.permission());
+        return definition != null
+                && definition.hasPermissionSource()
+                && online != null
+                && online.hasPermission(definition.permission());
+    }
+
+    private boolean isNewcomerEligibleByTime(OfflinePlayer player) {
+        return plugin.getConfig().getBoolean("newcomer.enabled", true)
+                && getNewcomerRawRemainingMillis(player) > 0L;
+    }
+
+    private long getNewcomerRawRemainingMillis(OfflinePlayer player) {
+        if (!plugin.getConfig().getBoolean("newcomer.enabled", true)) {
+            return 0L;
+        }
+        DurationParser.ParsedDuration duration = DurationParser.parse(plugin.getConfig().getString("newcomer.duration", "7d"))
+                .orElse(new DurationParser.ParsedDuration(false, 604_800_000L));
+        if (duration.permanent()) {
+            return Long.MAX_VALUE;
+        }
+        long firstSeen = ensure(player).firstSeen();
+        return Math.max(0L, firstSeen + duration.millis() - System.currentTimeMillis());
+    }
+
+    private Comparator<String> badgeComparator() {
+        return Comparator.comparingInt(this::getBadgePriority)
+                .reversed()
+                .thenComparing(String::compareTo);
+    }
+
+    private int maxVisibleBadges() {
+        return Math.max(1, Math.min(2, plugin.getConfig().getInt("display.max-badges", 2)));
     }
 
     public void saveAll() {
