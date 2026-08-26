@@ -14,8 +14,8 @@ messages:
     - "&FFFFFF/badge info <игрок> &8— &B8B8B8информация об игроке"
   help-give:
     - "&FFFFFF/badge give <игрок> <id> [время|permanent]"
-  help-take:
-    - "&FFFFFF/badge take <игрок> <id>"
+  help-remove:
+    - "&FFFFFF/badge remove <игрок> <id>"
   help-set:
     - "&FFFFFF/badge set <игрок> <id|none>"
   help-reload:
@@ -62,9 +62,9 @@ messages:
     - "&7"
     - "&55FF88Ты получил бейдж {badge} &55FF88на &FFFFFF{duration}&55FF88."
     - "&7"
-  badge-taken:
+  badge-remove-success:
     - "&7"
-    - "&55FF88У игрока &FFFFFF{player} &55FF88забран бейдж {badge}&55FF88."
+    - "&55FF88У игрока &FFFFFF{player} &55FF88удалён бейдж {badge}&55FF88."
     - "&7"
   badge-removed:
     - "&7"
