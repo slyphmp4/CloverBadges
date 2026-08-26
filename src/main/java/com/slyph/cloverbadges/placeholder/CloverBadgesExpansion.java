@@ -8,6 +8,7 @@ import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -49,27 +50,32 @@ public final class CloverBadgesExpansion extends PlaceholderExpansion {
 
         String parameter = params.toLowerCase(Locale.ROOT);
         return switch (parameter) {
-            case "badge" -> service.getActiveBadgeLegacy(player);
-            case "badge_spaced" -> {
-                String badge = service.getActiveBadgeLegacy(player);
-                yield badge.isEmpty() ? empty : badge + " ";
+            case "badge", "badges" -> service.getActiveBadgeLegacy(player);
+            case "badge_spaced", "badges_spaced" -> {
+                String badges = service.getActiveBadgeLegacy(player);
+                yield badges.isEmpty() ? empty : badges + " ";
             }
             case "badge_id" -> service.getActiveBadgeId(player).orElse(empty);
+            case "badge_ids" -> String.join(",", service.getActiveBadgeIds(player));
             case "badge_name" -> service.getActiveBadgeId(player)
                     .map(service::getBadgeName)
                     .map(ColorUtil::legacySection)
                     .orElse(empty);
-            case "badge_plain" -> service.getActiveBadgeId(player)
-                    .map(service::getBadgeText)
-                    .map(ColorUtil::plain)
-                    .orElse(empty);
+            case "badge_plain", "badges_plain" -> joinPlainBadges(player, empty);
             case "badge_name_plain" -> service.getActiveBadgeId(player)
                     .map(service::getBadgeName)
                     .map(ColorUtil::plain)
                     .orElse(empty);
+            case "badge_1" -> badgeAt(player, 0).map(service::getBadgeText).map(ColorUtil::legacySection).orElse(empty);
+            case "badge_2" -> badgeAt(player, 1).map(service::getBadgeText).map(ColorUtil::legacySection).orElse(empty);
+            case "badge_1_id" -> badgeAt(player, 0).orElse(empty);
+            case "badge_2_id" -> badgeAt(player, 1).orElse(empty);
+            case "badge_1_name" -> badgeAt(player, 0).map(service::getBadgeName).map(ColorUtil::legacySection).orElse(empty);
+            case "badge_2_name" -> badgeAt(player, 1).map(service::getBadgeName).map(ColorUtil::legacySection).orElse(empty);
             case "newcomer" -> Boolean.toString(service.isNewcomer(player));
             case "newcomer_remaining" -> service.formatNewcomerRemaining(player);
             case "owned_count" -> Integer.toString(service.getOwnedBadgeIds(player).size());
+            case "active_count" -> Integer.toString(service.getActiveBadgeIds(player).size());
             default -> dynamic(player, parameter, empty).orElse(null);
         };
     }
@@ -86,6 +92,34 @@ public final class CloverBadgesExpansion extends PlaceholderExpansion {
             }
             return Optional.of(service.formatRemaining(player, id));
         }
+        if (parameter.startsWith("priority_")) {
+            String id = parameter.substring(9);
+            if (service.getDefinition(id).isEmpty()) {
+                return Optional.of(empty);
+            }
+            return Optional.of(Integer.toString(service.getBadgePriority(id)));
+        }
         return Optional.empty();
+    }
+
+    private Optional<String> badgeAt(OfflinePlayer player, int index) {
+        List<String> active = service.getActiveBadgeIds(player);
+        if (index < 0 || index >= active.size()) {
+            return Optional.empty();
+        }
+        return Optional.of(active.get(index));
+    }
+
+    private String joinPlainBadges(OfflinePlayer player, String empty) {
+        List<String> active = service.getActiveBadgeIds(player);
+        if (active.isEmpty()) {
+            return empty;
+        }
+        String separator = ColorUtil.plain(plugin.getConfig().getString("display.separator", " "));
+        return active.stream()
+                .map(service::getBadgeText)
+                .map(ColorUtil::plain)
+                .reduce((left, right) -> left + separator + right)
+                .orElse(empty);
     }
 }
