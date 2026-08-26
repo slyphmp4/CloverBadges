@@ -5,9 +5,9 @@ messages:
   help-list:
     - "&FFFFFF/badge list &8— &B8B8B8твои бейджи"
   help-select:
-    - "&FFFFFF/badge select <id|none> &8— &B8B8B8выбрать бейдж"
+    - "&FFFFFF/badge select <id|auto|none> &8— &B8B8B8настроить отображение бейджей"
   help-off:
-    - "&FFFFFF/badge off &8— &B8B8B8скрыть активный бейдж"
+    - "&FFFFFF/badge off &8— &B8B8B8скрыть все бейджи"
   help-info:
     - "&FFFFFF/badge info &8— &B8B8B8информация о себе"
   help-admin-info:
@@ -17,7 +17,7 @@ messages:
   help-remove:
     - "&FFFFFF/badge remove <игрок> <id>"
   help-set:
-    - "&FFFFFF/badge set <игрок> <id|none>"
+    - "&FFFFFF/badge set <игрок> <id|auto|none>"
   help-reload:
     - "&FFFFFF/badge reload"
   help-footer:
@@ -48,11 +48,15 @@ messages:
     - "&7"
   badge-selected:
     - "&7"
-    - "&55FF88Активный бейдж: {badge}"
+    - "&55FF88Бейдж {badge} &55FF88закреплён в отображении."
+    - "&7"
+  badge-auto:
+    - "&7"
+    - "&55FF88Автоматический выбор двух самых приоритетных бейджей включён."
     - "&7"
   badge-cleared:
     - "&7"
-    - "&55FF88Активный бейдж отключён."
+    - "&55FF88Отображение бейджей отключено."
     - "&7"
   badge-given:
     - "&7"
@@ -72,11 +76,15 @@ messages:
     - "&7"
   badge-set-other:
     - "&7"
-    - "&55FF88Игроку &FFFFFF{player} &55FF88установлен активный бейдж {badge}&55FF88."
+    - "&55FF88Игроку &FFFFFF{player} &55FF88закреплён в отображении бейдж {badge}&55FF88."
+    - "&7"
+  badge-set-auto-other:
+    - "&7"
+    - "&55FF88Игроку &FFFFFF{player} &55FF88включён автоматический выбор бейджей по приоритету."
     - "&7"
   badge-set-none-other:
     - "&7"
-    - "&55FF88Игроку &FFFFFF{player} &55FF88отключён активный бейдж."
+    - "&55FF88Игроку &FFFFFF{player} &55FF88отключено отображение бейджей."
     - "&7"
   invalid-duration:
     - "&7"
@@ -90,17 +98,18 @@ messages:
     - "&7"
     - "&FFD166Твои бейджи:"
   list-entry:
-    - "&FFFFFF{id} &8• {name} &8• &B8B8B8{remaining}{selected}"
+    - "&FFFFFF{id} &8• {name} &8• &B8B8B8{remaining} &8• &B8B8B8приоритет {priority}{selected}"
   list-empty:
     - "&B8B8B8У тебя пока нет доступных бейджей."
   list-footer:
     - "&7"
   selected-mark:
-    - " &55FF88[активен]"
+    - " &55FF88[отображается]"
   info:
     - "&7"
     - "&FFD166Бейджи игрока &FFFFFF{player}"
-    - "&B8B8B8Активный: {active}"
+    - "&B8B8B8Отображаются: {active}"
+    - "&B8B8B8Количество: &FFFFFF{active_count}&B8B8B8/2"
     - "&B8B8B8Новичок: &FFFFFF{newcomer}"
     - "&B8B8B8Осталось новичка: &FFFFFF{newcomer_remaining}"
     - "&7"
