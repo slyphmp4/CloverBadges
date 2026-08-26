@@ -44,6 +44,7 @@ public final class BadgeTabCompleter implements TabCompleter {
         String sub = args[0].toLowerCase(Locale.ROOT);
         if (sub.equals("select") && args.length == 2 && sender instanceof Player player && sender.hasPermission("cloverbadges.select")) {
             List<String> values = new ArrayList<>(service.getOwnedBadgeIds(player));
+            values.add("auto");
             values.add("none");
             values.add("off");
             return filter(values, args[1]);
@@ -62,6 +63,7 @@ public final class BadgeTabCompleter implements TabCompleter {
             if (args.length == 3) {
                 List<String> values = new ArrayList<>(service.allBadgeIds());
                 if (sub.equals("set")) {
+                    values.add("auto");
                     values.add("none");
                     values.add("off");
                 }
