@@ -31,6 +31,7 @@ public final class BadgeTabCompleter implements TabCompleter {
             List<String> values = new ArrayList<>();
             addIf(sender, values, "list", "cloverbadges.list");
             addIf(sender, values, "select", "cloverbadges.select");
+            addIf(sender, values, "off", "cloverbadges.select");
             addIf(sender, values, "info", "cloverbadges.info");
             addIf(sender, values, "info", "cloverbadges.admin.info");
             addIf(sender, values, "give", "cloverbadges.admin.give");
@@ -44,6 +45,7 @@ public final class BadgeTabCompleter implements TabCompleter {
         if (sub.equals("select") && args.length == 2 && sender instanceof Player player && sender.hasPermission("cloverbadges.select")) {
             List<String> values = new ArrayList<>(service.getOwnedBadgeIds(player));
             values.add("none");
+            values.add("off");
             return filter(values, args[1]);
         }
 
@@ -61,6 +63,7 @@ public final class BadgeTabCompleter implements TabCompleter {
                 List<String> values = new ArrayList<>(service.allBadgeIds());
                 if (sub.equals("set")) {
                     values.add("none");
+                    values.add("off");
                 }
                 return filter(values, args[2]);
             }
