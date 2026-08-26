@@ -4,6 +4,10 @@ import com.slyph.cloverbadges.CloverBadges;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 public final class ConfigManager {
     private final CloverBadges plugin;
@@ -32,8 +36,26 @@ public final class ConfigManager {
 
     public void reload() {
         plugin.reloadConfig();
-        badges = YamlConfiguration.loadConfiguration(badgesFile);
-        messages = YamlConfiguration.loadConfiguration(messagesFile);
+        badges = loadWithDefaults(badgesFile, "badges.yml");
+        messages = loadWithDefaults(messagesFile, "messages.yml");
+    }
+
+    private YamlConfiguration loadWithDefaults(File file, String resourceName) {
+        YamlConfiguration configuration = YamlConfiguration.loadConfiguration(file);
+        try (InputStream inputStream = plugin.getResource(resourceName)) {
+            if (inputStream == null) {
+                return configuration;
+            }
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
+                    new InputStreamReader(inputStream, StandardCharsets.UTF_8)
+            );
+            configuration.setDefaults(defaults);
+            configuration.options().copyDefaults(true);
+            configuration.save(file);
+        } catch (IOException exception) {
+            plugin.getLogger().warning("Failed to update " + resourceName + ": " + exception.getMessage());
+        }
+        return configuration;
     }
 
     public YamlConfiguration badges() {
