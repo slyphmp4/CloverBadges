@@ -1,0 +1,18 @@
+newcomer:
+  enabled: true
+  badge-id: "newcomer"
+  duration: "7d"
+  auto-display: true
+
+selection:
+  auto-select-first-granted-badge: true
+  clear-invalid-selection: true
+
+placeholders:
+  empty-value: ""
+  permanent-text: "навсегда"
+  expired-text: "0с"
+
+storage:
+  save-on-change: true
+  cleanup-interval-ticks: 6000
