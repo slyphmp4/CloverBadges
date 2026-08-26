@@ -8,6 +8,10 @@ selection:
   auto-select-first-granted-badge: true
   clear-invalid-selection: true
 
+display:
+  max-badges: 2
+  separator: " "
+
 placeholders:
   empty-value: ""
   permanent-text: "навсегда"
