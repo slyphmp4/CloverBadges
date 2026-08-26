@@ -42,6 +42,9 @@ public final class ConfigManager {
 
     private YamlConfiguration loadWithDefaults(File file, String resourceName) {
         YamlConfiguration configuration = YamlConfiguration.loadConfiguration(file);
+        if (resourceName.equals("messages.yml")) {
+            migrateMessageKeys(configuration);
+        }
         try (InputStream inputStream = plugin.getResource(resourceName)) {
             if (inputStream == null) {
                 return configuration;
@@ -56,6 +59,21 @@ public final class ConfigManager {
             plugin.getLogger().warning("Failed to update " + resourceName + ": " + exception.getMessage());
         }
         return configuration;
+    }
+
+    private void migrateMessageKeys(YamlConfiguration configuration) {
+        migratePath(configuration, "messages.help-take", "messages.help-remove");
+        migratePath(configuration, "messages.badge-taken", "messages.badge-remove-success");
+    }
+
+    private void migratePath(YamlConfiguration configuration, String oldPath, String newPath) {
+        if (!configuration.contains(oldPath)) {
+            return;
+        }
+        if (!configuration.contains(newPath)) {
+            configuration.set(newPath, configuration.get(oldPath));
+        }
+        configuration.set(oldPath, null);
     }
 
     public YamlConfiguration badges() {
