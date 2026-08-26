@@ -26,7 +26,7 @@ permissions:
     children:
       cloverbadges.admin.info: true
       cloverbadges.admin.give: true
-      cloverbadges.admin.take: true
+      cloverbadges.admin.remove: true
       cloverbadges.admin.set: true
       cloverbadges.admin.reload: true
   cloverbadges.use:
@@ -41,7 +41,7 @@ permissions:
     default: op
   cloverbadges.admin.give:
     default: op
-  cloverbadges.admin.take:
+  cloverbadges.admin.remove:
     default: op
   cloverbadges.admin.set:
     default: op
