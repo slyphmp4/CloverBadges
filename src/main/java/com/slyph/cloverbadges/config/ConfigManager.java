@@ -36,6 +36,8 @@ public final class ConfigManager {
 
     public void reload() {
         plugin.reloadConfig();
+        plugin.getConfig().options().copyDefaults(true);
+        plugin.saveConfig();
         badges = loadWithDefaults(badgesFile, "badges.yml");
         messages = loadWithDefaults(messagesFile, "messages.yml");
     }
