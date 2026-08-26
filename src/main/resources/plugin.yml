@@ -1,0 +1,49 @@
+name: CloverBadges
+version: '${version}'
+main: com.slyph.cloverbadges.CloverBadges
+author: slyph
+api-version: '1.16'
+softdepend:
+  - PlaceholderAPI
+commands:
+  badge:
+    description: Управление бейджами CloverBadges
+    usage: /badge
+    aliases:
+      - badges
+      - cloverbadges
+permissions:
+  cloverbadges.*:
+    default: op
+    children:
+      cloverbadges.use: true
+      cloverbadges.list: true
+      cloverbadges.select: true
+      cloverbadges.info: true
+      cloverbadges.admin.*: true
+  cloverbadges.admin.*:
+    default: op
+    children:
+      cloverbadges.admin.info: true
+      cloverbadges.admin.give: true
+      cloverbadges.admin.take: true
+      cloverbadges.admin.set: true
+      cloverbadges.admin.reload: true
+  cloverbadges.use:
+    default: true
+  cloverbadges.list:
+    default: true
+  cloverbadges.select:
+    default: true
+  cloverbadges.info:
+    default: true
+  cloverbadges.admin.info:
+    default: op
+  cloverbadges.admin.give:
+    default: op
+  cloverbadges.admin.take:
+    default: op
+  cloverbadges.admin.set:
+    default: op
+  cloverbadges.admin.reload:
+    default: op
