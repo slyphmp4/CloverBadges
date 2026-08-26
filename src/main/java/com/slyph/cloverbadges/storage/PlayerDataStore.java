@@ -14,7 +14,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public final class PlayerDataStore {
@@ -61,7 +63,22 @@ public final class PlayerDataStore {
                     grants.put(badgeId.toLowerCase(), new BadgeGrant(expiresAt));
                 }
             }
-            result.put(uuid, new PlayerBadgeData(uuid, firstSeen, selected, disabled, grants));
+
+            Set<String> suppressedAutomaticBadges = new LinkedHashSet<>();
+            for (String badgeId : yaml.getStringList(path + ".suppressed-automatic-badges")) {
+                if (badgeId != null && !badgeId.isBlank()) {
+                    suppressedAutomaticBadges.add(badgeId.toLowerCase());
+                }
+            }
+
+            result.put(uuid, new PlayerBadgeData(
+                    uuid,
+                    firstSeen,
+                    selected,
+                    disabled,
+                    grants,
+                    suppressedAutomaticBadges
+            ));
         }
         return result;
     }
@@ -73,6 +90,7 @@ public final class PlayerDataStore {
             yaml.set(path + ".first-seen", playerData.firstSeen());
             yaml.set(path + ".selected", playerData.selectedBadge() == null ? "" : playerData.selectedBadge());
             yaml.set(path + ".selection-disabled", playerData.selectionDisabled());
+            yaml.set(path + ".suppressed-automatic-badges", playerData.suppressedAutomaticBadges().stream().sorted().toList());
             for (Map.Entry<String, BadgeGrant> entry : playerData.grants().entrySet()) {
                 yaml.set(path + ".grants." + entry.getKey() + ".expires-at", entry.getValue().expiresAt());
             }
