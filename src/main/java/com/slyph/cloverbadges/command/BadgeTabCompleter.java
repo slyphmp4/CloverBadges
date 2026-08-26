@@ -35,7 +35,7 @@ public final class BadgeTabCompleter implements TabCompleter {
             addIf(sender, values, "info", "cloverbadges.info");
             addIf(sender, values, "info", "cloverbadges.admin.info");
             addIf(sender, values, "give", "cloverbadges.admin.give");
-            addIf(sender, values, "take", "cloverbadges.admin.take");
+            addIf(sender, values, "remove", "cloverbadges.admin.remove");
             addIf(sender, values, "set", "cloverbadges.admin.set");
             addIf(sender, values, "reload", "cloverbadges.admin.reload");
             return filter(values, args[0]);
@@ -54,7 +54,7 @@ public final class BadgeTabCompleter implements TabCompleter {
         }
 
         if ((sub.equals("give") && sender.hasPermission("cloverbadges.admin.give"))
-                || (sub.equals("take") && sender.hasPermission("cloverbadges.admin.take"))
+                || (sub.equals("remove") && sender.hasPermission("cloverbadges.admin.remove"))
                 || (sub.equals("set") && sender.hasPermission("cloverbadges.admin.set"))) {
             if (args.length == 2) {
                 return filter(onlineNames(), args[1]);
