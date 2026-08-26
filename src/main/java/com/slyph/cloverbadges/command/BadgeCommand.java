@@ -12,9 +12,11 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class BadgeCommand implements CommandExecutor {
     private final CloverBadges plugin;
@@ -67,16 +69,17 @@ public final class BadgeCommand implements CommandExecutor {
 
         messages.send(sender, "list-header");
         Set<String> owned = service.getOwnedBadgeIds(player);
-        Optional<String> active = service.getActiveBadgeId(player);
+        Set<String> active = new LinkedHashSet<>(service.getActiveBadgeIds(player));
         if (owned.isEmpty()) {
             messages.send(sender, "list-empty");
         } else {
             for (String id : owned) {
-                String selected = active.filter(id::equalsIgnoreCase).isPresent() ? messages.firstRaw("selected-mark") : "";
+                String selected = active.contains(id) ? messages.firstRaw("selected-mark") : "";
                 messages.send(sender, "list-entry", Map.of(
                         "id", id,
                         "name", service.getBadgeName(id),
                         "remaining", service.formatRemaining(player, id),
+                        "priority", Integer.toString(service.getBadgePriority(id)),
                         "selected", selected
                 ));
             }
@@ -102,6 +105,12 @@ public final class BadgeCommand implements CommandExecutor {
         if (args[1].equalsIgnoreCase("none") || args[1].equalsIgnoreCase("off")) {
             service.clearSelection(player);
             messages.send(sender, "badge-cleared");
+            return true;
+        }
+
+        if (args[1].equalsIgnoreCase("auto")) {
+            service.enableAutomaticSelection(player);
+            messages.send(sender, "badge-auto");
             return true;
         }
 
@@ -158,12 +167,17 @@ public final class BadgeCommand implements CommandExecutor {
             target = player;
         }
 
-        String active = service.getActiveBadgeId(target)
+        String active = service.getActiveBadgeIds(target).stream()
                 .map(service::getBadgeName)
-                .orElse("&B8B8B8нет");
+                .collect(Collectors.joining(" &8+ "));
+        if (active.isBlank()) {
+            active = "&B8B8B8нет";
+        }
+
         messages.send(sender, "info", Map.of(
                 "player", displayName(target),
                 "active", active,
+                "active_count", Integer.toString(service.getActiveBadgeIds(target).size()),
                 "newcomer", service.isNewcomer(target) ? "да" : "нет",
                 "newcomer_remaining", service.formatNewcomerRemaining(target)
         ));
@@ -273,6 +287,12 @@ public final class BadgeCommand implements CommandExecutor {
         if (args[2].equalsIgnoreCase("none") || args[2].equalsIgnoreCase("off")) {
             service.clearSelection(target);
             messages.send(sender, "badge-set-none-other", Map.of("player", displayName(target)));
+            return true;
+        }
+
+        if (args[2].equalsIgnoreCase("auto")) {
+            service.enableAutomaticSelection(target);
+            messages.send(sender, "badge-set-auto-other", Map.of("player", displayName(target)));
             return true;
         }
 
