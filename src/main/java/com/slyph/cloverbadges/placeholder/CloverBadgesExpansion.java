@@ -72,6 +72,7 @@ public final class CloverBadgesExpansion extends PlaceholderExpansion {
             case "badge_2_id" -> badgeAt(player, 1).orElse(empty);
             case "badge_1_name" -> badgeAt(player, 0).map(service::getBadgeName).map(ColorUtil::legacySection).orElse(empty);
             case "badge_2_name" -> badgeAt(player, 1).map(service::getBadgeName).map(ColorUtil::legacySection).orElse(empty);
+            case "separator" -> ColorUtil.legacySection(plugin.getConfig().getString("display.separator", " "));
             case "newcomer" -> Boolean.toString(service.isNewcomer(player));
             case "newcomer_remaining" -> service.formatNewcomerRemaining(player);
             case "owned_count" -> Integer.toString(service.getOwnedBadgeIds(player).size());
@@ -99,6 +100,34 @@ public final class CloverBadgesExpansion extends PlaceholderExpansion {
             }
             return Optional.of(Integer.toString(service.getBadgePriority(id)));
         }
+        if (parameter.startsWith("name_")) {
+            String id = parameter.substring(5);
+            if (service.getDefinition(id).isEmpty()) {
+                return Optional.of(empty);
+            }
+            return Optional.of(ColorUtil.legacySection(service.getBadgeName(id)));
+        }
+        if (parameter.startsWith("text_")) {
+            String id = parameter.substring(5);
+            if (service.getDefinition(id).isEmpty()) {
+                return Optional.of(empty);
+            }
+            return Optional.of(ColorUtil.legacySection(service.getBadgeText(id)));
+        }
+        if (parameter.startsWith("description_")) {
+            String id = parameter.substring(12);
+            if (service.getDefinition(id).isEmpty()) {
+                return Optional.of(empty);
+            }
+            return Optional.of(joinColoredLines(service.getBadgeDescriptionLines(id)));
+        }
+        if (parameter.startsWith("how_to_get_")) {
+            String id = parameter.substring(11);
+            if (service.getDefinition(id).isEmpty()) {
+                return Optional.of(empty);
+            }
+            return Optional.of(joinColoredLines(service.getBadgeHowToGetLines(id)));
+        }
         return Optional.empty();
     }
 
@@ -121,5 +150,12 @@ public final class CloverBadgesExpansion extends PlaceholderExpansion {
                 .map(ColorUtil::plain)
                 .reduce((left, right) -> left + separator + right)
                 .orElse(empty);
+    }
+
+    private String joinColoredLines(List<String> lines) {
+        if (lines == null || lines.isEmpty()) {
+            return "";
+        }
+        return ColorUtil.legacySection(String.join("\n", lines));
     }
 }
