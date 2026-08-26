@@ -45,7 +45,7 @@ public final class BadgeCommand implements CommandExecutor {
             case "off" -> off(sender);
             case "info" -> info(sender, args);
             case "give" -> give(sender, args);
-            case "take" -> take(sender, args);
+            case "remove" -> remove(sender, args);
             case "set" -> set(sender, args);
             case "reload" -> reload(sender);
             default -> {
@@ -214,8 +214,8 @@ public final class BadgeCommand implements CommandExecutor {
         return true;
     }
 
-    private boolean take(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("cloverbadges.admin.take")) {
+    private boolean remove(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("cloverbadges.admin.remove")) {
             messages.send(sender, "no-permission");
             return true;
         }
@@ -246,7 +246,7 @@ public final class BadgeCommand implements CommandExecutor {
                 "player", displayName(target),
                 "badge", service.getBadgeName(id)
         );
-        messages.send(sender, "badge-taken", replacements);
+        messages.send(sender, "badge-remove-success", replacements);
         Player online = target.getPlayer();
         if (online != null && !online.equals(sender)) {
             messages.send(online, "badge-removed", replacements);
@@ -324,8 +324,8 @@ public final class BadgeCommand implements CommandExecutor {
         if (sender.hasPermission("cloverbadges.admin.give")) {
             messages.send(sender, "help-give");
         }
-        if (sender.hasPermission("cloverbadges.admin.take")) {
-            messages.send(sender, "help-take");
+        if (sender.hasPermission("cloverbadges.admin.remove")) {
+            messages.send(sender, "help-remove");
         }
         if (sender.hasPermission("cloverbadges.admin.set")) {
             messages.send(sender, "help-set");
