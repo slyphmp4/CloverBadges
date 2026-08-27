@@ -1,6 +1,7 @@
 package com.slyph.cloverbadges.config;
 
 import com.slyph.cloverbadges.CloverBadges;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
@@ -44,6 +45,9 @@ public final class ConfigManager {
 
     private YamlConfiguration loadWithDefaults(File file, String resourceName) {
         YamlConfiguration configuration = YamlConfiguration.loadConfiguration(file);
+        if (resourceName.equals("badges.yml")) {
+            migrateBadgeKeys(configuration);
+        }
         if (resourceName.equals("messages.yml")) {
             migrateMessageKeys(configuration);
         }
@@ -61,6 +65,17 @@ public final class ConfigManager {
             plugin.getLogger().warning("Failed to update " + resourceName + ": " + exception.getMessage());
         }
         return configuration;
+    }
+
+    private void migrateBadgeKeys(YamlConfiguration configuration) {
+        ConfigurationSection section = configuration.getConfigurationSection("badges");
+        if (section == null) {
+            return;
+        }
+        for (String key : section.getKeys(false)) {
+            configuration.set("badges." + key + ".description", null);
+            configuration.set("badges." + key + ".how-to-get", null);
+        }
     }
 
     private void migrateMessageKeys(YamlConfiguration configuration) {
