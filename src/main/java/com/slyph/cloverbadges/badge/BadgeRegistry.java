@@ -35,9 +35,7 @@ public final class BadgeRegistry {
             String permission = section.getString(key + ".permission", "");
             int priority = section.getInt(key + ".priority", 0);
             List<String> hover = section.getStringList(key + ".hover");
-            List<String> description = section.getStringList(key + ".description");
-            List<String> howToGet = section.getStringList(key + ".how-to-get");
-            loaded.put(id, new BadgeDefinition(id, name, text, permission, priority, hover, description, howToGet));
+            loaded.put(id, new BadgeDefinition(id, name, text, permission, priority, hover));
         }
         badges = Collections.unmodifiableMap(loaded);
     }
