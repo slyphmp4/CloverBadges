@@ -8,14 +8,10 @@ public record BadgeDefinition(
         String text,
         String permission,
         int priority,
-        List<String> hover,
-        List<String> description,
-        List<String> howToGet
+        List<String> hover
 ) {
     public BadgeDefinition {
         hover = hover == null ? List.of() : List.copyOf(hover);
-        description = description == null ? List.of() : List.copyOf(description);
-        howToGet = howToGet == null ? List.of() : List.copyOf(howToGet);
     }
 
     public boolean hasPermissionSource() {
