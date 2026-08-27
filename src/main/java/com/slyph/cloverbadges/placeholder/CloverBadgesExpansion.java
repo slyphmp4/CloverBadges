@@ -114,6 +114,12 @@ public final class CloverBadgesExpansion extends PlaceholderExpansion {
             }
             return Optional.of(ColorUtil.legacySection(service.getBadgeText(id)));
         }
+        if (parameter.startsWith("hover_")) {
+            String id = parameter.substring(6);
+            return service.getDefinition(id)
+                    .map(definition -> joinColoredLines(definition.hover()))
+                    .or(() -> Optional.of(empty));
+        }
         if (parameter.startsWith("description_")) {
             String id = parameter.substring(12);
             if (service.getDefinition(id).isEmpty()) {
