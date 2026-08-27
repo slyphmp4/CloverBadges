@@ -293,14 +293,6 @@ public final class PlayerBadgeService implements BadgeApi {
         return registry.get(badgeId).map(BadgeDefinition::priority).orElse(0);
     }
 
-    public List<String> getBadgeDescriptionLines(String badgeId) {
-        return registry.get(badgeId).map(BadgeDefinition::description).orElse(List.of());
-    }
-
-    public List<String> getBadgeHowToGetLines(String badgeId) {
-        return registry.get(badgeId).map(BadgeDefinition::howToGet).orElse(List.of());
-    }
-
     public Optional<BadgeDefinition> getDefinition(String badgeId) {
         return registry.get(badgeId);
     }
