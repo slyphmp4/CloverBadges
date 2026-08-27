@@ -120,20 +120,6 @@ public final class CloverBadgesExpansion extends PlaceholderExpansion {
                     .map(definition -> joinColoredLines(definition.hover()))
                     .or(() -> Optional.of(empty));
         }
-        if (parameter.startsWith("description_")) {
-            String id = parameter.substring(12);
-            if (service.getDefinition(id).isEmpty()) {
-                return Optional.of(empty);
-            }
-            return Optional.of(joinColoredLines(service.getBadgeDescriptionLines(id)));
-        }
-        if (parameter.startsWith("how_to_get_")) {
-            String id = parameter.substring(11);
-            if (service.getDefinition(id).isEmpty()) {
-                return Optional.of(empty);
-            }
-            return Optional.of(joinColoredLines(service.getBadgeHowToGetLines(id)));
-        }
         return Optional.empty();
     }
 
