@@ -137,32 +137,31 @@ public final class BadgeMenuManager {
     }
 
     private ItemStack badgeItem(Player player, String badgeId, boolean active, int ownedCount, int activeCount) {
-        YamlConfiguration badges = configManager.badges();
         YamlConfiguration gui = configManager.gui();
-        String base = "badges." + badgeId + ".gui.";
+        String base = "badges." + badgeId + ".";
         String state = active ? "active" : "inactive";
 
-        String materialName = badgeString(badges, gui, base, "material-" + state, "material", "PLAYER_HEAD");
+        String materialName = badgeString(gui, base, "material-" + state, "material", "PLAYER_HEAD");
         Material material = material(materialName, Material.PLAYER_HEAD);
         ItemStack item = new ItemStack(material);
-        item.setAmount(Math.max(1, Math.min(material.getMaxStackSize(), badgeInt(badges, gui, base, "amount-" + state, "amount", 1))));
+        item.setAmount(Math.max(1, Math.min(material.getMaxStackSize(), badgeInt(gui, base, "amount-" + state, "amount", 1))));
         ItemMeta meta = item.getItemMeta();
 
-        String name = badgeString(badges, gui, base, "name-" + state, "name", "{name}");
+        String name = badgeString(gui, base, "name-" + state, "name", "{name}");
         meta.displayName(guiText(applyPlaceholders(name, player, badgeId, ownedCount, activeCount)));
 
-        List<String> lore = badgeLore(badges, gui, base, state);
+        List<String> lore = badgeLore(gui, base, state);
         meta.lore(renderLore(lore, player, badgeId, ownedCount, activeCount));
         item.setItemMeta(meta);
         return item;
     }
 
-    private String badgeString(YamlConfiguration badges, YamlConfiguration gui, String base, String stateKey, String commonKey, String fallback) {
-        if (badges.contains(base + stateKey)) {
-            return badges.getString(base + stateKey, fallback);
+    private String badgeString(YamlConfiguration gui, String base, String stateKey, String commonKey, String fallback) {
+        if (gui.contains(base + stateKey)) {
+            return gui.getString(base + stateKey, fallback);
         }
-        if (badges.contains(base + commonKey)) {
-            return badges.getString(base + commonKey, fallback);
+        if (gui.contains(base + commonKey)) {
+            return gui.getString(base + commonKey, fallback);
         }
         if (gui.contains("badge." + stateKey)) {
             return gui.getString("badge." + stateKey, fallback);
@@ -170,12 +169,12 @@ public final class BadgeMenuManager {
         return gui.getString("badge." + commonKey, fallback);
     }
 
-    private int badgeInt(YamlConfiguration badges, YamlConfiguration gui, String base, String stateKey, String commonKey, int fallback) {
-        if (badges.contains(base + stateKey)) {
-            return badges.getInt(base + stateKey, fallback);
+    private int badgeInt(YamlConfiguration gui, String base, String stateKey, String commonKey, int fallback) {
+        if (gui.contains(base + stateKey)) {
+            return gui.getInt(base + stateKey, fallback);
         }
-        if (badges.contains(base + commonKey)) {
-            return badges.getInt(base + commonKey, fallback);
+        if (gui.contains(base + commonKey)) {
+            return gui.getInt(base + commonKey, fallback);
         }
         if (gui.contains("badge." + stateKey)) {
             return gui.getInt("badge." + stateKey, fallback);
@@ -183,13 +182,13 @@ public final class BadgeMenuManager {
         return gui.getInt("badge." + commonKey, fallback);
     }
 
-    private List<String> badgeLore(YamlConfiguration badges, YamlConfiguration gui, String base, String state) {
+    private List<String> badgeLore(YamlConfiguration gui, String base, String state) {
         String statePath = base + "lore-" + state;
-        if (badges.isList(statePath)) {
-            return badges.getStringList(statePath);
+        if (gui.isList(statePath)) {
+            return gui.getStringList(statePath);
         }
-        if (badges.isList(base + "lore")) {
-            return badges.getStringList(base + "lore");
+        if (gui.isList(base + "lore")) {
+            return gui.getStringList(base + "lore");
         }
         if (gui.isList("badge.lore-" + state)) {
             return gui.getStringList("badge.lore-" + state);
@@ -198,9 +197,8 @@ public final class BadgeMenuManager {
     }
 
     private List<String> badgeActions(String badgeId, boolean active, ClickType clickType) {
-        YamlConfiguration badges = configManager.badges();
         YamlConfiguration gui = configManager.gui();
-        String base = "badges." + badgeId + ".gui.";
+        String base = "badges." + badgeId + ".";
         String click = clickKey(clickType);
         String state = active ? "actions-active." : "actions-inactive.";
 
@@ -212,7 +210,7 @@ public final class BadgeMenuManager {
         );
 
         for (String path : paths) {
-            List<String> configured = actionList(badges, base + path);
+            List<String> configured = actionList(gui, base + path);
             if (configured != null) {
                 return configured;
             }

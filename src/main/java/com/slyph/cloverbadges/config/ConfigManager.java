@@ -45,9 +45,22 @@ public final class ConfigManager {
         plugin.reloadConfig();
         plugin.getConfig().options().copyDefaults(true);
         plugin.saveConfig();
+
         badges = loadWithDefaults(badgesFile, "badges.yml");
         messages = loadWithDefaults(messagesFile, "messages.yml");
-        gui = loadWithDefaults(guiFile, "gui.yml");
+
+        gui = YamlConfiguration.loadConfiguration(guiFile);
+        migrateGuiKeys(gui);
+        boolean migratedBadgeGui = migrateBadgeGuiSettings();
+        gui = applyDefaults(gui, guiFile, "gui.yml");
+
+        if (migratedBadgeGui) {
+            try {
+                badges.save(badgesFile);
+            } catch (IOException exception) {
+                plugin.getLogger().warning("Failed to migrate badge GUI settings from badges.yml: " + exception.getMessage());
+            }
+        }
     }
 
     private YamlConfiguration loadWithDefaults(File file, String resourceName) {
@@ -58,9 +71,10 @@ public final class ConfigManager {
         if (resourceName.equals("messages.yml")) {
             migrateMessageKeys(configuration);
         }
-        if (resourceName.equals("gui.yml")) {
-            migrateGuiKeys(configuration);
-        }
+        return applyDefaults(configuration, file, resourceName);
+    }
+
+    private YamlConfiguration applyDefaults(YamlConfiguration configuration, File file, String resourceName) {
         try (InputStream inputStream = plugin.getResource(resourceName)) {
             if (inputStream == null) {
                 return configuration;
@@ -107,6 +121,45 @@ public final class ConfigManager {
                 configuration.set("clear-all.slot", 50);
             }
             configuration.set("menu.layout-version", 3);
+            layoutVersion = 3;
+        }
+        if (layoutVersion < 4) {
+            configuration.set("menu.layout-version", 4);
+        }
+    }
+
+    private boolean migrateBadgeGuiSettings() {
+        ConfigurationSection section = badges.getConfigurationSection("badges");
+        if (section == null) {
+            return false;
+        }
+
+        boolean changed = false;
+        for (String badgeId : section.getKeys(false)) {
+            String sourcePath = "badges." + badgeId + ".gui";
+            ConfigurationSection source = badges.getConfigurationSection(sourcePath);
+            if (source == null) {
+                continue;
+            }
+
+            String targetPath = "badges." + badgeId;
+            if (!gui.contains(targetPath)) {
+                copySection(source, gui, targetPath);
+            }
+
+            badges.set(sourcePath, null);
+            changed = true;
+        }
+        return changed;
+    }
+
+    private void copySection(ConfigurationSection source, YamlConfiguration target, String targetPath) {
+        for (String key : source.getKeys(true)) {
+            Object value = source.get(key);
+            if (value instanceof ConfigurationSection) {
+                continue;
+            }
+            target.set(targetPath + "." + key, value);
         }
     }
 

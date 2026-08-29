@@ -1,7 +1,7 @@
 menu:
   title: "&8Значки"
   size: 54
-  layout-version: 3
+  layout-version: 4
   badge-slots:
     - 20
     - 21
@@ -31,6 +31,32 @@ badge:
   actions:
     any:
       - "[toggle]"
+
+badges:
+  newcomer:
+    material: "PLAYER_HEAD"
+    amount: 1
+    name: "{name}"
+    lore-active:
+      - "&7"
+      - "&55FF88Отображается рядом с ником"
+      - "&B8B8B8Осталось: &FFFFFF{remaining}"
+      - "&7"
+      - "&B8B8B8Недавно присоединился к серверу."
+      - "&7"
+      - "&FFFFFFНажми, чтобы отключить значок."
+      - "&7"
+    lore-inactive:
+      - "&7"
+      - "&B8B8B8Осталось: &FFFFFF{remaining}"
+      - "&7"
+      - "&B8B8B8Недавно присоединился к серверу."
+      - "&7"
+      - "&FFFFFFНажми, чтобы включить значок."
+      - "&7"
+    actions:
+      any:
+        - "[toggle]"
 
 empty-slot:
   material: "LIGHT_GRAY_STAINED_GLASS_PANE"
