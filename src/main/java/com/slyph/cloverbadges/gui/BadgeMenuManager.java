@@ -39,17 +39,23 @@ public final class BadgeMenuManager {
     }
 
     public void open(Player player) {
-        BadgeMenuHolder holder = new BadgeMenuHolder(player.getUniqueId());
+        open(player, MenuPage.BADGES);
+    }
+
+    private void open(Player player, MenuPage page) {
         int ownedCount = badgeService.getOwnedBadgeIds(player).size();
         int activeCount = badgeService.getActiveBadgeIds(player).size();
-        int size = inventorySize(ownedCount == 0);
-        String title = applyPlaceholders(
-                configManager.gui().getString("menu.title", "&8Значки"),
-                player,
-                null,
-                ownedCount,
-                activeCount
+        int size = page == MenuPage.BADGES
+                ? badgeInventorySize(ownedCount == 0)
+                : configuredInventorySize("nickname-colors.size", 54);
+        String titlePath = page == MenuPage.BADGES ? "menu.title" : "nickname-colors.title";
+        String fallbackTitle = page == MenuPage.BADGES ? "&8Значки" : "&8Покраски никнеймов";
+        String title = applyPagePlaceholders(
+                applyPlaceholders(configManager.gui().getString(titlePath, fallbackTitle), player, null, ownedCount, activeCount),
+                page
         );
+
+        BadgeMenuHolder holder = new BadgeMenuHolder(player.getUniqueId(), page);
         Inventory inventory = Bukkit.createInventory(holder, size, ColorUtil.legacySection(title));
         holder.inventory(inventory);
         render(holder, player);
@@ -63,6 +69,16 @@ public final class BadgeMenuManager {
 
         Inventory inventory = holder.getInventory();
         if (inventory == null) {
+            return;
+        }
+
+        int switcherSlot = validSlot(configManager.gui().getInt("page-switcher.slot", 4), inventory.getSize(), 4);
+        if (rawSlot == switcherSlot) {
+            open(player, holder.page().opposite());
+            return;
+        }
+
+        if (holder.page() != MenuPage.BADGES) {
             return;
         }
 
@@ -103,8 +119,17 @@ public final class BadgeMenuManager {
         if (inventory == null) {
             return;
         }
+
         inventory.clear();
         holder.clearBadgeSlots();
+
+        int ownedCount = badgeService.getOwnedBadgeIds(player).size();
+        int activeCount = badgeService.getActiveBadgeIds(player).size();
+        renderPageSwitcher(inventory, player, holder.page(), ownedCount, activeCount);
+
+        if (holder.page() == MenuPage.NICKNAME_COLORS) {
+            return;
+        }
 
         List<String> owned = new ArrayList<>(badgeService.getOwnedBadgeIds(player));
         if (owned.isEmpty()) {
@@ -132,6 +157,58 @@ public final class BadgeMenuManager {
 
         int clearSlot = validSlot(configManager.gui().getInt("clear-all.slot", 50), inventory.getSize(), 50);
         inventory.setItem(clearSlot, configuredItem("clear-all", player, null, owned.size(), active.size(), Material.BARRIER));
+    }
+
+    private void renderPageSwitcher(Inventory inventory, Player player, MenuPage page, int ownedCount, int activeCount) {
+        int slot = validSlot(configManager.gui().getInt("page-switcher.slot", 4), inventory.getSize(), 4);
+        inventory.setItem(slot, pageSwitcherItem(player, page, ownedCount, activeCount));
+    }
+
+    private ItemStack pageSwitcherItem(Player player, MenuPage page, int ownedCount, int activeCount) {
+        YamlConfiguration gui = configManager.gui();
+        String pagePath = page == MenuPage.BADGES ? "page-switcher.badges-page." : "page-switcher.nickname-colors-page.";
+        String commonPath = "page-switcher.";
+
+        String materialName = pageSwitcherString(gui, pagePath, commonPath, "material", "PLAYER_HEAD");
+        Material material = material(materialName, Material.PLAYER_HEAD);
+        ItemStack item = new ItemStack(material);
+        int amount = pageSwitcherInt(gui, pagePath, commonPath, "amount", 1);
+        item.setAmount(Math.max(1, Math.min(material.getMaxStackSize(), amount)));
+
+        ItemMeta meta = item.getItemMeta();
+        String headName = pageSwitcherString(gui, pagePath, commonPath, "head.minecraft-heads", "");
+        String headValue = pageSwitcherString(gui, pagePath, commonPath, "head.value", "");
+        customHeadService.apply(meta, headName, headValue);
+
+        String name = pageSwitcherString(gui, pagePath, commonPath, "name", "&7");
+        name = applyPagePlaceholders(applyPlaceholders(name, player, null, ownedCount, activeCount), page);
+        meta.displayName(guiText(name));
+
+        List<String> lore = gui.isList(pagePath + "lore")
+                ? gui.getStringList(pagePath + "lore")
+                : gui.getStringList(commonPath + "lore");
+        List<Component> renderedLore = new ArrayList<>();
+        for (String line : lore) {
+            String rendered = applyPagePlaceholders(applyPlaceholders(line, player, null, ownedCount, activeCount), page);
+            renderedLore.add(guiText(rendered));
+        }
+        meta.lore(renderedLore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private String pageSwitcherString(YamlConfiguration gui, String pagePath, String commonPath, String key, String fallback) {
+        if (gui.contains(pagePath + key)) {
+            return gui.getString(pagePath + key, fallback);
+        }
+        return gui.getString(commonPath + key, fallback);
+    }
+
+    private int pageSwitcherInt(YamlConfiguration gui, String pagePath, String commonPath, String key, int fallback) {
+        if (gui.contains(pagePath + key)) {
+            return gui.getInt(pagePath + key, fallback);
+        }
+        return gui.getInt(commonPath + key, fallback);
     }
 
     private void renderEmptyState(Inventory inventory, Player player) {
@@ -302,6 +379,13 @@ public final class BadgeMenuManager {
         Material material = material(gui.getString(path + ".material", fallbackMaterial.name()), fallbackMaterial);
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
+        if (material == Material.PLAYER_HEAD) {
+            customHeadService.apply(
+                    meta,
+                    gui.getString(path + ".head.minecraft-heads", ""),
+                    gui.getString(path + ".head.value", "")
+            );
+        }
         String name = gui.getString(path + ".name", " ");
         meta.displayName(guiText(applyPlaceholders(name, player, badgeId, ownedCount, activeCount)));
         meta.lore(renderLore(gui.getStringList(path + ".lore"), player, badgeId, ownedCount, activeCount));
@@ -343,6 +427,15 @@ public final class BadgeMenuManager {
         return value;
     }
 
+    private String applyPagePlaceholders(String input, MenuPage page) {
+        String value = input == null ? "" : input;
+        String current = page == MenuPage.BADGES ? "Значки" : "Покраски никнеймов";
+        String target = page == MenuPage.BADGES ? "Покраски никнеймов" : "Значки";
+        return value
+                .replace("{page}", current)
+                .replace("{target_page}", target);
+    }
+
     private List<Integer> badgeSlots(int inventorySize) {
         List<Integer> configured = configManager.gui().getIntegerList("menu.badge-slots");
         List<Integer> source = configured.isEmpty() ? DEFAULT_BADGE_SLOTS : configured;
@@ -368,9 +461,13 @@ public final class BadgeMenuManager {
         return List.copyOf(result);
     }
 
-    private int inventorySize(boolean emptyState) {
+    private int badgeInventorySize(boolean emptyState) {
         String path = emptyState ? "empty-state.size" : "menu.size";
         int fallback = emptyState ? 45 : 54;
+        return configuredInventorySize(path, fallback);
+    }
+
+    private int configuredInventorySize(String path, int fallback) {
         int requested = configManager.gui().getInt(path, fallback);
         int clamped = Math.max(9, Math.min(54, requested));
         int rounded = ((clamped + 8) / 9) * 9;
