@@ -2,14 +2,10 @@ messages:
   help-header:
     - "&7"
     - "&FFD166CloverBadges &8• &FFFFFFКоманды"
-  help-menu:
-    - "&FFFFFF/badge &8— &B8B8B8открыть меню значков"
   help-list:
     - "&FFFFFF/badge list &8— &B8B8B8твои бейджи"
   help-select:
     - "&FFFFFF/badge select <id|auto|none> &8— &B8B8B8настроить отображение бейджей"
-  help-off:
-    - "&FFFFFF/badge off &8— &B8B8B8скрыть все бейджи"
   help-info:
     - "&FFFFFF/badge info &8— &B8B8B8информация о себе"
   help-admin-info:
