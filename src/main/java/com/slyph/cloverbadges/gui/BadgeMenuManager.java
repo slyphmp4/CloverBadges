@@ -3,6 +3,8 @@ package com.slyph.cloverbadges.gui;
 import com.slyph.cloverbadges.config.ConfigManager;
 import com.slyph.cloverbadges.gui.action.BadgeActionExecutor;
 import com.slyph.cloverbadges.head.CustomHeadService;
+import com.slyph.cloverbadges.nicknamecolor.NicknameColorDefinition;
+import com.slyph.cloverbadges.nicknamecolor.PlayerNicknameColorService;
 import com.slyph.cloverbadges.player.PlayerBadgeService;
 import com.slyph.cloverbadges.util.ColorUtil;
 import net.kyori.adventure.text.Component;
@@ -26,14 +28,23 @@ import java.util.Set;
 
 public final class BadgeMenuManager {
     private static final List<Integer> DEFAULT_BADGE_SLOTS = List.of(20, 21, 22, 23, 24, 29, 30, 31, 32, 33);
+    private static final List<Integer> DEFAULT_NICKNAME_COLOR_SLOTS = List.of(20, 22, 24, 29, 31, 33);
     private final ConfigManager configManager;
     private final PlayerBadgeService badgeService;
+    private final PlayerNicknameColorService nicknameColorService;
     private final BadgeActionExecutor actionExecutor;
     private final CustomHeadService customHeadService;
 
-    public BadgeMenuManager(ConfigManager configManager, PlayerBadgeService badgeService, BadgeActionExecutor actionExecutor, CustomHeadService customHeadService) {
+    public BadgeMenuManager(
+            ConfigManager configManager,
+            PlayerBadgeService badgeService,
+            PlayerNicknameColorService nicknameColorService,
+            BadgeActionExecutor actionExecutor,
+            CustomHeadService customHeadService
+    ) {
         this.configManager = configManager;
         this.badgeService = badgeService;
+        this.nicknameColorService = nicknameColorService;
         this.actionExecutor = actionExecutor;
         this.customHeadService = customHeadService;
     }
@@ -49,7 +60,7 @@ public final class BadgeMenuManager {
                 ? badgeInventorySize(ownedCount == 0)
                 : configuredInventorySize("nickname-colors.size", 54);
         String titlePath = page == MenuPage.BADGES ? "menu.title" : "nickname-colors.title";
-        String fallbackTitle = page == MenuPage.BADGES ? "&8Значки" : "&8Покраски никнеймов";
+        String fallbackTitle = page == MenuPage.BADGES ? "&8Значки" : "&8";
         String title = applyPagePlaceholders(
                 applyPlaceholders(configManager.gui().getString(titlePath, fallbackTitle), player, null, ownedCount, activeCount),
                 page
@@ -78,7 +89,18 @@ public final class BadgeMenuManager {
             return;
         }
 
-        if (holder.page() != MenuPage.BADGES) {
+        if (holder.page() == MenuPage.NICKNAME_COLORS) {
+            int clearColorSlot = validSlot(configManager.gui().getInt("nickname-colors.clear.slot", 49), inventory.getSize(), 49);
+            if (rawSlot == clearColorSlot) {
+                nicknameColorService.clear(player);
+                render(holder, player);
+                return;
+            }
+
+            String colorId = holder.nicknameColorAt(rawSlot);
+            if (colorId != null && nicknameColorService.select(player, colorId)) {
+                render(holder, player);
+            }
             return;
         }
 
@@ -121,13 +143,14 @@ public final class BadgeMenuManager {
         }
 
         inventory.clear();
-        holder.clearBadgeSlots();
+        holder.clearSlots();
 
         int ownedCount = badgeService.getOwnedBadgeIds(player).size();
         int activeCount = badgeService.getActiveBadgeIds(player).size();
         renderPageSwitcher(inventory, player, holder.page(), ownedCount, activeCount);
 
         if (holder.page() == MenuPage.NICKNAME_COLORS) {
+            renderNicknameColors(holder, player);
             return;
         }
 
@@ -157,6 +180,138 @@ public final class BadgeMenuManager {
 
         int clearSlot = validSlot(configManager.gui().getInt("clear-all.slot", 50), inventory.getSize(), 50);
         inventory.setItem(clearSlot, configuredItem("clear-all", player, null, owned.size(), active.size(), Material.BARRIER));
+    }
+
+    private void renderNicknameColors(BadgeMenuHolder holder, Player player) {
+        Inventory inventory = holder.getInventory();
+        List<NicknameColorDefinition> colors = nicknameColorService.allColors();
+        List<Integer> slots = nicknameColorSlots(inventory.getSize());
+        String selectedId = nicknameColorService.selectedId(player).orElse("");
+        int visible = Math.min(colors.size(), slots.size());
+
+        for (int index = 0; index < visible; index++) {
+            NicknameColorDefinition definition = colors.get(index);
+            int slot = slots.get(index);
+            boolean selected = definition.id().equals(selectedId);
+            boolean available = nicknameColorService.isAvailable(player, definition);
+            inventory.setItem(slot, nicknameColorItem(player, definition, selected, available));
+            holder.nicknameColorSlot(slot, definition.id());
+        }
+
+        int clearSlot = validSlot(configManager.gui().getInt("nickname-colors.clear.slot", 49), inventory.getSize(), 49);
+        inventory.setItem(clearSlot, configuredItem("nickname-colors.clear", player, null, 0, 0, Material.GRAY_DYE));
+    }
+
+    private ItemStack nicknameColorItem(Player player, NicknameColorDefinition definition, boolean selected, boolean available) {
+        YamlConfiguration gui = configManager.gui();
+        String base = "nickname-color-items." + definition.id() + ".";
+        String state = selected ? "selected" : available ? "available" : "locked";
+
+        String materialName = nicknameColorString(gui, base, "material-" + state, "material", "NAME_TAG");
+        Material material = material(materialName, Material.NAME_TAG);
+        ItemStack item = new ItemStack(material);
+        int amount = nicknameColorInt(gui, base, "amount-" + state, "amount", 1);
+        item.setAmount(Math.max(1, Math.min(material.getMaxStackSize(), amount)));
+        ItemMeta meta = item.getItemMeta();
+
+        if (material == Material.PLAYER_HEAD) {
+            String headName = nicknameColorHeadString(gui, base, state, "minecraft-heads");
+            String headValue = nicknameColorHeadString(gui, base, state, "value");
+            customHeadService.apply(meta, headName, headValue);
+        }
+
+        String name = nicknameColorString(gui, base, "name-" + state, "name", "&7");
+        meta.displayName(guiText(applyNicknameColorPlaceholders(name, player, definition, selected, available)));
+        meta.lore(renderNicknameColorLore(nicknameColorLore(gui, base, state), player, definition, selected, available));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private String nicknameColorString(YamlConfiguration gui, String base, String stateKey, String commonKey, String fallback) {
+        if (gui.contains(base + stateKey)) {
+            return gui.getString(base + stateKey, fallback);
+        }
+        if (gui.contains(base + commonKey)) {
+            return gui.getString(base + commonKey, fallback);
+        }
+        if (gui.contains("nickname-color." + stateKey)) {
+            return gui.getString("nickname-color." + stateKey, fallback);
+        }
+        return gui.getString("nickname-color." + commonKey, fallback);
+    }
+
+    private int nicknameColorInt(YamlConfiguration gui, String base, String stateKey, String commonKey, int fallback) {
+        if (gui.contains(base + stateKey)) {
+            return gui.getInt(base + stateKey, fallback);
+        }
+        if (gui.contains(base + commonKey)) {
+            return gui.getInt(base + commonKey, fallback);
+        }
+        if (gui.contains("nickname-color." + stateKey)) {
+            return gui.getInt("nickname-color." + stateKey, fallback);
+        }
+        return gui.getInt("nickname-color." + commonKey, fallback);
+    }
+
+    private String nicknameColorHeadString(YamlConfiguration gui, String base, String state, String key) {
+        String itemStatePath = base + "head-" + state + "." + key;
+        if (gui.contains(itemStatePath)) {
+            return gui.getString(itemStatePath, "");
+        }
+        String itemPath = base + "head." + key;
+        if (gui.contains(itemPath)) {
+            return gui.getString(itemPath, "");
+        }
+        String globalStatePath = "nickname-color.head-" + state + "." + key;
+        if (gui.contains(globalStatePath)) {
+            return gui.getString(globalStatePath, "");
+        }
+        return gui.getString("nickname-color.head." + key, "");
+    }
+
+    private List<String> nicknameColorLore(YamlConfiguration gui, String base, String state) {
+        if (gui.isList(base + "lore-" + state)) {
+            return gui.getStringList(base + "lore-" + state);
+        }
+        if (gui.isList(base + "lore")) {
+            return gui.getStringList(base + "lore");
+        }
+        if (gui.isList("nickname-color.lore-" + state)) {
+            return gui.getStringList("nickname-color.lore-" + state);
+        }
+        return gui.getStringList("nickname-color.lore");
+    }
+
+    private List<Component> renderNicknameColorLore(
+            List<String> lines,
+            Player player,
+            NicknameColorDefinition definition,
+            boolean selected,
+            boolean available
+    ) {
+        List<Component> result = new ArrayList<>();
+        for (String line : lines) {
+            result.add(guiText(applyNicknameColorPlaceholders(line, player, definition, selected, available)));
+        }
+        return result;
+    }
+
+    private String applyNicknameColorPlaceholders(
+            String input,
+            Player player,
+            NicknameColorDefinition definition,
+            boolean selected,
+            boolean available
+    ) {
+        String state = selected ? "selected" : available ? "available" : "locked";
+        return (input == null ? "" : input)
+                .replace("{color_id}", definition.id())
+                .replace("{color_name}", definition.name())
+                .replace("{preview}", nicknameColorService.preview(player, definition))
+                .replace("{selected}", Boolean.toString(selected))
+                .replace("{available}", Boolean.toString(available))
+                .replace("{state}", state)
+                .replace("{player}", player.getName());
     }
 
     private void renderPageSwitcher(Inventory inventory, Player player, MenuPage page, int ownedCount, int activeCount) {
@@ -413,6 +568,7 @@ public final class BadgeMenuManager {
         replacements.put("active_count", Integer.toString(activeCount));
         replacements.put("max_owned", Integer.toString(badgeService.maxOwnedBadges()));
         replacements.put("max_active", Integer.toString(badgeService.maxVisibleBadges()));
+        nicknameColorService.selectedId(player).ifPresent(id -> replacements.put("nickname_color", id));
         if (badgeId != null) {
             boolean active = badgeService.getActiveBadgeIds(player).contains(badgeId);
             replacements.put("id", badgeId);
@@ -456,6 +612,18 @@ public final class BadgeMenuManager {
                 if (result.size() >= badgeService.maxOwnedBadges()) {
                     break;
                 }
+            }
+        }
+        return List.copyOf(result);
+    }
+
+    private List<Integer> nicknameColorSlots(int inventorySize) {
+        List<Integer> configured = configManager.gui().getIntegerList("nickname-colors.color-slots");
+        List<Integer> source = configured.isEmpty() ? DEFAULT_NICKNAME_COLOR_SLOTS : configured;
+        LinkedHashSet<Integer> result = new LinkedHashSet<>();
+        for (int slot : source) {
+            if (slot >= 0 && slot < inventorySize) {
+                result.add(slot);
             }
         }
         return List.copyOf(result);

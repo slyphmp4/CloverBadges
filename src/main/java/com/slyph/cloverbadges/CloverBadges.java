@@ -11,6 +11,9 @@ import com.slyph.cloverbadges.gui.action.BadgeActionExecutor;
 import com.slyph.cloverbadges.head.CustomHeadService;
 import com.slyph.cloverbadges.listener.PlayerListener;
 import com.slyph.cloverbadges.message.MessageService;
+import com.slyph.cloverbadges.nicknamecolor.NicknameColorRegistry;
+import com.slyph.cloverbadges.nicknamecolor.PlayerNicknameColorService;
+import com.slyph.cloverbadges.nicknamecolor.storage.NicknameColorStore;
 import com.slyph.cloverbadges.placeholder.CloverBadgesExpansion;
 import com.slyph.cloverbadges.player.PlayerBadgeService;
 import com.slyph.cloverbadges.storage.PlayerDataStore;
@@ -26,6 +29,7 @@ public final class CloverBadges extends JavaPlugin {
     private BadgeRegistry badgeRegistry;
     private MessageService messageService;
     private PlayerBadgeService badgeService;
+    private PlayerNicknameColorService nicknameColorService;
     private CustomHeadService customHeadService;
     private CloverBadgesExpansion expansion;
     private BukkitTask cleanupTask;
@@ -37,9 +41,20 @@ public final class CloverBadges extends JavaPlugin {
         messageService = new MessageService(configManager);
         PlayerDataStore dataStore = new PlayerDataStore(this);
         badgeService = new PlayerBadgeService(this, badgeRegistry, dataStore);
+
+        NicknameColorRegistry nicknameColorRegistry = new NicknameColorRegistry(configManager);
+        NicknameColorStore nicknameColorStore = new NicknameColorStore(this);
+        nicknameColorService = new PlayerNicknameColorService(this, nicknameColorRegistry, nicknameColorStore);
+
         customHeadService = new CustomHeadService(this, configManager);
         BadgeActionExecutor actionExecutor = new BadgeActionExecutor(this, badgeService, messageService);
-        BadgeMenuManager menuManager = new BadgeMenuManager(configManager, badgeService, actionExecutor, customHeadService);
+        BadgeMenuManager menuManager = new BadgeMenuManager(
+                configManager,
+                badgeService,
+                nicknameColorService,
+                actionExecutor,
+                customHeadService
+        );
 
         PluginCommand badgeCommand = Objects.requireNonNull(getCommand("badge"));
         badgeCommand.setExecutor(new BadgeCommand(this, badgeService, messageService, menuManager));
@@ -50,7 +65,7 @@ public final class CloverBadges extends JavaPlugin {
         getServer().getServicesManager().register(BadgeApi.class, badgeService, this, ServicePriority.Normal);
 
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            expansion = new CloverBadgesExpansion(this, badgeService);
+            expansion = new CloverBadgesExpansion(this, badgeService, nicknameColorService);
             expansion.register();
         }
 
@@ -73,12 +88,16 @@ public final class CloverBadges extends JavaPlugin {
         if (badgeService != null) {
             badgeService.saveAll();
         }
+        if (nicknameColorService != null) {
+            nicknameColorService.saveAll();
+        }
         getServer().getServicesManager().unregisterAll(this);
     }
 
     public void reloadPlugin() {
         configManager.reload();
         badgeRegistry.reload();
+        nicknameColorService.reload();
         customHeadService.reload();
         scheduleCleanup();
     }

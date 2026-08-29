@@ -1,6 +1,7 @@
 package com.slyph.cloverbadges.placeholder;
 
 import com.slyph.cloverbadges.CloverBadges;
+import com.slyph.cloverbadges.nicknamecolor.PlayerNicknameColorService;
 import com.slyph.cloverbadges.player.PlayerBadgeService;
 import com.slyph.cloverbadges.util.ColorUtil;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
@@ -15,10 +16,16 @@ import java.util.Optional;
 public final class CloverBadgesExpansion extends PlaceholderExpansion {
     private final CloverBadges plugin;
     private final PlayerBadgeService service;
+    private final PlayerNicknameColorService nicknameColorService;
 
-    public CloverBadgesExpansion(CloverBadges plugin, PlayerBadgeService service) {
+    public CloverBadgesExpansion(
+            CloverBadges plugin,
+            PlayerBadgeService service,
+            PlayerNicknameColorService nicknameColorService
+    ) {
         this.plugin = plugin;
         this.service = service;
+        this.nicknameColorService = nicknameColorService;
     }
 
     @Override
@@ -72,6 +79,12 @@ public final class CloverBadgesExpansion extends PlaceholderExpansion {
             case "badge_2_id" -> badgeAt(player, 1).orElse(empty);
             case "badge_1_name" -> badgeAt(player, 0).map(service::getBadgeName).map(ColorUtil::legacySection).orElse(empty);
             case "badge_2_name" -> badgeAt(player, 1).map(service::getBadgeName).map(ColorUtil::legacySection).orElse(empty);
+            case "colored_nickname", "nickname_colored" -> nicknameColorService.coloredNicknameLegacy(player);
+            case "nickname_color_id" -> nicknameColorService.selectedId(player).orElse(empty);
+            case "nickname_color_name" -> nicknameColorService.selectedId(player)
+                    .map(nicknameColorService::getColorName)
+                    .map(ColorUtil::legacySection)
+                    .orElse(empty);
             case "separator" -> ColorUtil.legacySection(plugin.getConfig().getString("display.separator", " "));
             case "newcomer" -> Boolean.toString(service.isNewcomer(player));
             case "newcomer_remaining" -> service.formatNewcomerRemaining(player);
