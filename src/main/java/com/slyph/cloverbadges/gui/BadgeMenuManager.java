@@ -2,6 +2,7 @@ package com.slyph.cloverbadges.gui;
 
 import com.slyph.cloverbadges.config.ConfigManager;
 import com.slyph.cloverbadges.gui.action.BadgeActionExecutor;
+import com.slyph.cloverbadges.head.CustomHeadService;
 import com.slyph.cloverbadges.player.PlayerBadgeService;
 import com.slyph.cloverbadges.util.ColorUtil;
 import net.kyori.adventure.text.Component;
@@ -28,11 +29,13 @@ public final class BadgeMenuManager {
     private final ConfigManager configManager;
     private final PlayerBadgeService badgeService;
     private final BadgeActionExecutor actionExecutor;
+    private final CustomHeadService customHeadService;
 
-    public BadgeMenuManager(ConfigManager configManager, PlayerBadgeService badgeService, BadgeActionExecutor actionExecutor) {
+    public BadgeMenuManager(ConfigManager configManager, PlayerBadgeService badgeService, BadgeActionExecutor actionExecutor, CustomHeadService customHeadService) {
         this.configManager = configManager;
         this.badgeService = badgeService;
         this.actionExecutor = actionExecutor;
+        this.customHeadService = customHeadService;
     }
 
     public void open(Player player) {
@@ -149,6 +152,10 @@ public final class BadgeMenuManager {
         item.setAmount(Math.max(1, Math.min(material.getMaxStackSize(), badgeInt(gui, base, "amount-" + state, "amount", 1))));
         ItemMeta meta = item.getItemMeta();
 
+        String headName = badgeHeadString(gui, base, state, "minecraft-heads");
+        String headValue = badgeHeadString(gui, base, state, "value");
+        customHeadService.apply(meta, headName, headValue);
+
         String name = badgeString(gui, base, "name-" + state, "name", "{name}");
         meta.displayName(guiText(applyPlaceholders(name, player, badgeId, ownedCount, activeCount)));
 
@@ -169,6 +176,22 @@ public final class BadgeMenuManager {
             return gui.getString("badge." + stateKey, fallback);
         }
         return gui.getString("badge." + commonKey, fallback);
+    }
+
+    private String badgeHeadString(YamlConfiguration gui, String base, String state, String key) {
+        String badgeStatePath = base + "head-" + state + "." + key;
+        if (gui.contains(badgeStatePath)) {
+            return gui.getString(badgeStatePath, "");
+        }
+        String badgePath = base + "head." + key;
+        if (gui.contains(badgePath)) {
+            return gui.getString(badgePath, "");
+        }
+        String globalStatePath = "badge.head-" + state + "." + key;
+        if (gui.contains(globalStatePath)) {
+            return gui.getString(globalStatePath, "");
+        }
+        return gui.getString("badge.head." + key, "");
     }
 
     private int badgeInt(YamlConfiguration gui, String base, String stateKey, String commonKey, int fallback) {

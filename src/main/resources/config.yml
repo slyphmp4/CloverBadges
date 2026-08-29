@@ -19,6 +19,15 @@ placeholders:
   permanent-text: "навсегда"
   expired-text: "0с"
 
+minecraft-heads:
+  api:
+    enabled: true
+    app-uuid: ""
+    api-key: ""
+    demo: false
+    connect-timeout-ms: 5000
+    read-timeout-ms: 10000
+
 storage:
   save-on-change: true
   cleanup-interval-ticks: 6000

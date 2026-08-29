@@ -17,6 +17,9 @@ menu:
 badge:
   material: "PLAYER_HEAD"
   amount: 1
+  head:
+    minecraft-heads: ""
+    value: ""
   name: "{name}"
   lore-active:
     - "&7"
@@ -36,6 +39,9 @@ badges:
   newcomer:
     material: "PLAYER_HEAD"
     amount: 1
+    head:
+      minecraft-heads: ""
+      value: ""
     name: "{name}"
     lore-active:
       - "&7"
