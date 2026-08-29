@@ -12,6 +12,7 @@ public final class BadgeMenuHolder implements InventoryHolder {
     private final UUID playerId;
     private final MenuPage page;
     private final Map<Integer, String> badgeSlots = new HashMap<>();
+    private final Map<Integer, String> nicknameColorSlots = new HashMap<>();
     private Inventory inventory;
 
     public BadgeMenuHolder(UUID playerId, MenuPage page) {
@@ -31,8 +32,9 @@ public final class BadgeMenuHolder implements InventoryHolder {
         this.inventory = inventory;
     }
 
-    public void clearBadgeSlots() {
+    public void clearSlots() {
         badgeSlots.clear();
+        nicknameColorSlots.clear();
     }
 
     public void badgeSlot(int slot, String badgeId) {
@@ -41,6 +43,14 @@ public final class BadgeMenuHolder implements InventoryHolder {
 
     public String badgeAt(int slot) {
         return badgeSlots.get(slot);
+    }
+
+    public void nicknameColorSlot(int slot, String colorId) {
+        nicknameColorSlots.put(slot, colorId);
+    }
+
+    public String nicknameColorAt(int slot) {
+        return nicknameColorSlots.get(slot);
     }
 
     @Override
