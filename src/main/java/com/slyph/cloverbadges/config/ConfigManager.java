@@ -154,6 +154,10 @@ public final class ConfigManager {
                 configuration.set("empty-state.size", 45);
             }
             configuration.set("menu.layout-version", 6);
+            layoutVersion = 6;
+        }
+        if (layoutVersion < 7) {
+            configuration.set("menu.layout-version", 7);
         }
     }
 
