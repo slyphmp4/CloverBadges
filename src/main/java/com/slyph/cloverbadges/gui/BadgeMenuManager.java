@@ -37,13 +37,15 @@ public final class BadgeMenuManager {
 
     public void open(Player player) {
         BadgeMenuHolder holder = new BadgeMenuHolder(player.getUniqueId());
-        int size = inventorySize();
+        int ownedCount = badgeService.getOwnedBadgeIds(player).size();
+        int activeCount = badgeService.getActiveBadgeIds(player).size();
+        int size = inventorySize(ownedCount == 0);
         String title = applyPlaceholders(
                 configManager.gui().getString("menu.title", "&8Значки"),
                 player,
                 null,
-                badgeService.getOwnedBadgeIds(player).size(),
-                badgeService.getActiveBadgeIds(player).size()
+                ownedCount,
+                activeCount
         );
         Inventory inventory = Bukkit.createInventory(holder, size, ColorUtil.legacySection(title));
         holder.inventory(inventory);
@@ -61,7 +63,7 @@ public final class BadgeMenuManager {
             return;
         }
 
-        int clearSlot = validSlot(configManager.gui().getInt("clear-all.slot", 41), inventory.getSize(), 41);
+        int clearSlot = validSlot(configManager.gui().getInt("clear-all.slot", 50), inventory.getSize(), 50);
         if (rawSlot == clearSlot && !badgeService.getOwnedBadgeIds(player).isEmpty()) {
             badgeService.clearSelection(player);
             render(holder, player);
@@ -122,10 +124,10 @@ public final class BadgeMenuManager {
             }
         }
 
-        int infoBookSlot = validSlot(configManager.gui().getInt("info-book.slot", 39), inventory.getSize(), 39);
+        int infoBookSlot = validSlot(configManager.gui().getInt("info-book.slot", 48), inventory.getSize(), 48);
         inventory.setItem(infoBookSlot, configuredItem("info-book", player, null, owned.size(), active.size(), Material.BOOK));
 
-        int clearSlot = validSlot(configManager.gui().getInt("clear-all.slot", 41), inventory.getSize(), 41);
+        int clearSlot = validSlot(configManager.gui().getInt("clear-all.slot", 50), inventory.getSize(), 50);
         inventory.setItem(clearSlot, configuredItem("clear-all", player, null, owned.size(), active.size(), Material.BARRIER));
     }
 
@@ -343,8 +345,10 @@ public final class BadgeMenuManager {
         return List.copyOf(result);
     }
 
-    private int inventorySize() {
-        int requested = configManager.gui().getInt("menu.size", 45);
+    private int inventorySize(boolean emptyState) {
+        String path = emptyState ? "empty-state.size" : "menu.size";
+        int fallback = emptyState ? 45 : 54;
+        int requested = configManager.gui().getInt(path, fallback);
         int clamped = Math.max(9, Math.min(54, requested));
         int rounded = ((clamped + 8) / 9) * 9;
         return Math.min(54, rounded);
