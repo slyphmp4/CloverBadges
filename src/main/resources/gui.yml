@@ -1,154 +1,221 @@
 menu:
-  title: "&8Значки"
+  title: '&8Значки'
   size: 54
   layout-version: 7
   badge-slots:
-    - 20
-    - 21
-    - 22
-    - 23
-    - 24
-    - 29
-    - 30
-    - 31
-    - 32
-    - 33
+  - 20
+  - 21
+  - 22
+  - 23
+  - 24
+  - 29
+  - 30
+  - 31
+  - 32
+  - 33
 
 nickname-colors:
-  title: "&8Покраски никнеймов"
+  title: '&8'
   size: 54
 
 page-switcher:
   slot: 4
-  material: "PLAYER_HEAD"
+  material: PLAYER_HEAD
   amount: 1
   head:
-    minecraft-heads: ""
-    value: ""
-  name: "&7"
+    minecraft-heads: ''
+    value: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMjEzYmFlN2M5YzU0YzkwOTM2NmU1ZTMyOTQyMDU1MDcxNDAxYmQyZWJkM2Y0MDg2MmMwYWQ0OTI0MTFjMjhlYyJ9fX0=
+  name: '&7'
   lore:
-    - "&7"
-    - "&FFFFFFОткрыть: &B8B8B8{target_page}"
-    - "&7"
+  - '&7'
+  - '&FFFFFFОткрыть: &B8B8B8{target_page}'
+  - '&7'
   badges-page:
     lore:
-      - "&7"
-      - "&FFFFFFПерейти к покраскам никнеймов"
-      - "&7"
+    - ' &ADADAD→ Перейти к покраскам никнеймов '
+    - '&7'
   nickname-colors-page:
     lore:
-      - "&7"
-      - "&FFFFFFВернуться к значкам"
-      - "&7"
+    - ' &ADADAD← Вернуться к значкам '
+    - '&7'
 
 badge:
-  material: "PLAYER_HEAD"
-  amount: 1
   head:
-    minecraft-heads: ""
-    value: ""
-  name: "{name}"
+    minecraft-heads: ''
+    value: ''
+  material: PLAYER_HEAD
+  amount: 1
+  name: '{name}'
   lore-active:
-    - "&7"
-    - "&55FF88Отображается рядом с ником"
-    - "&B8B8B8Нажми, чтобы отключить значок."
-    - "&7"
+  - '&7'
   lore-inactive:
-    - "&7"
-    - "&B8B8B8Сейчас значок скрыт"
-    - "&FFFFFFНажми, чтобы включить значок."
-    - "&7"
+  - '&7'
   actions:
     any:
-      - "[toggle]"
+    - '[toggle]'
 
 badges:
   newcomer:
-    material: "PLAYER_HEAD"
+    material: PLAYER_HEAD
     amount: 1
     head:
-      minecraft-heads: ""
-      value: ""
-    name: "{name}"
+      minecraft-heads: ''
+      value: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMjY2Nzg4NmIxN2ZmNWY0OGU5NDEyZTlmZjE3MWI1MjEyZDhlYjMzMTE4NTM0ZGUwNDU4YWVlM2E4OTQwMTdkMyJ9fX0=
+    name: '&7'
     lore-active:
-      - "&7"
-      - "&55FF88Отображается рядом с ником"
-      - "&B8B8B8Осталось: &FFFFFF{remaining}"
-      - "&7"
-      - "&B8B8B8Недавно присоединился к серверу."
-      - "&7"
-      - "&FFFFFFНажми, чтобы отключить значок."
-      - "&7"
+    - ' &FFD166⭐ — Новичок &A6A6A6(надет) '
+    - '&7'
+    - ' &FFE6A6│ Данный значок обозначает, что игрок зашёл на сервер '
+    - ' &FFE6A6│ совсем недавно, если игроку понадобится помощь,'
+    - ' &FFE6A6│ то, пожалуйста, не будьте равнодушны '
+    - '&7'
+    - ' &FFC536⏳ ▪ Данный значок является &lлимитированным '
+    - '&7'
+    - ' &878787⏏ Нажми, чтобы снять значок '
+    - '&7'
     lore-inactive:
-      - "&7"
-      - "&B8B8B8Осталось: &FFFFFF{remaining}"
-      - "&7"
-      - "&B8B8B8Недавно присоединился к серверу."
-      - "&7"
-      - "&FFFFFFНажми, чтобы включить значок."
-      - "&7"
+    - ' &FFD166⭐ — Новичок &A6A6A6(не надет) '
+    - '&7'
+    - ' &FFE6A6│ Данный значок обозначает, что игрок зашёл на сервер '
+    - ' &FFE6A6│ совсем недавно, если игроку понадобится помощь,'
+    - ' &FFE6A6│ то, пожалуйста, не будьте равнодушны '
+    - '&7'
+    - ' &FFC536⏳ ▪ Данный значок является &lлимитированным '
+    - '&7'
+    - ' &878787⏏ Нажми, чтобы надеть значок '
+    - '&7'
     actions:
       any:
-        - "[toggle]"
+      - '[toggle]'
+  dev:
+    material: PLAYER_HEAD
+    amount: 1
+    head:
+      minecraft-heads: ''
+      value: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYWM0NmUyZTkzNmRjY2IwZWRjNzAzNmJiNWRjYjEyNjJhYzAwMDYzODUxNWVmZTM0ZmZiOTdkYjY4NzY0NjIyMSJ9fX0=
+    name: '&7'
+    lore-active:
+    - ' &8F5CFF ⌘ — Разработчик &A6A6A6(надет) '
+    - '&7'
+    - ' &C8A6FF│ Данный значок обозначает, что этот игрок является '
+    - ' &C8A6FF│ разработчиком игрового ПО этого проекта '
+    - '&7'
+    - ' &7557FF★ ▪ Данный значок является &lэксклюзивным '
+    - '&7'
+    - ' &878787⏏ Нажми, чтобы снять значок '
+    - '&7'
+    lore-inactive:
+    - ' &8F5CFF ⌘ — Разработчик &A6A6A6(не надет) '
+    - '&7'
+    - ' &C8A6FF│ Данный значок обозначает, что этот игрок является '
+    - ' &C8A6FF│ разработчиком игрового ПО этого проекта '
+    - '&7'
+    - ' &7557FF★ ▪ Данный значок является &lэксклюзивным '
+    - '&7'
+    - ' &878787⏏ Нажми, чтобы надеть значок '
+    - '&7'
+    actions:
+      any:
+      - '[toggle]'
+  season1:
+    material: PLAYER_HEAD
+    amount: 1
+    head:
+      minecraft-heads: ''
+      value: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmNkYjJmMzk4MzAzMDI1NDI0YmZiMmRiMGUyY2MwNTNjMTI3ODc4ZTU3M2ZjYzM3YzgwMGU1ODM5YTM0M2ZlZSJ9fX0=
+    name: '&7'
+    lore-active:
+    - ' &2183FC 🌊 — Волна &A6A6A6(надет) '
+    - '&7'
+    - ' &8BBFFD│ Данный значок обозначает, что этот игрок '
+    - ' &8BBFFD│ получил этот значок в первом сезоне проекта '
+    - '&7'
+    - ' &459AFF☀ ▪ Данный значок является &lсезонным '
+    - '&7'
+    - ' &878787⏏ Нажми, чтобы снять значок '
+    - '&7'
+    lore-inactive:
+    - ' &2183FC 🌊 — Волна &A6A6A6(не надет) '
+    - '&7'
+    - ' &8BBFFD│ Данный значок обозначает, что этот игрок '
+    - ' &8BBFFD│ получил этот значок в первом сезоне проекта '
+    - '&7'
+    - ' &459AFF☀ ▪ Данный значок является &lсезонным '
+    - '&7'
+    - ' &878787⏏ Нажми, чтобы надеть значок '
+    - '&7'
+    actions:
+      any:
+      - '[toggle]'
 
 empty-slot:
-  material: "LIGHT_GRAY_STAINED_GLASS_PANE"
-  name: "&D0D0D0Пусто"
+  material: LIGHT_GRAY_STAINED_GLASS_PANE
+  name: '&7'
   lore:
-    - "&7"
-    - "&B8B8B8Здесь появится следующий полученный значок."
-    - "&7"
+  - ' &C4C4C4◇ Пусто...'
+  - ''
+  - ' &A3A3A3Здесь появится следующий полученный значок '
+  - '&7'
 
 info-book:
   slot: 48
-  material: "BOOK"
-  name: "&FFFFFFКатегории значков"
+  material: BOOK
+  name: '&7'
   lore:
-    - "&7"
-    - "&FFD166Лимитированные"
-    - "&B8B8B8Значки из данной категории доступны"
-    - "&B8B8B8к покупке в магазине определенное"
-    - "&B8B8B8количество времени, чаще всего — 1 месяц."
-    - "&7"
-    - "&55FF88Сезонные"
-    - "&B8B8B8Значки из данной категории доступны"
-    - "&B8B8B8к покупке всегда, на протяжении"
-    - "&B8B8B8всего сезона."
-    - "&7"
-    - "&C084FCЭксклюзивные"
-    - "&B8B8B8Значки из данной категории недоступны"
-    - "&B8B8B8для покупки в магазине, их можно получить"
-    - "&B8B8B8только на ивентах или за помощь"
-    - "&B8B8B8в общественных делах сервера."
-    - "&7"
+  - '&E3DEDE ⓪ — Типы значков &m                                 &m '
+  - '&7'
+  - ' &FFC536⏳ ▪ Лимитированные'
+  - '&7'
+  - ' &FFDB7D│ Значки из данной категории доступны '
+  - ' &FFDB7D│ к покупке в магазине определенное '
+  - ' &FFDB7D│ количество времени, чаще всего — 1 месяц. '
+  - '&7'
+  - '&7'
+  - ' &2EA4FF☀ ▪ Сезонные'
+  - '&7'
+  - ' &96D2FF│ Значки из данной категории доступны '
+  - ' &96D2FF│ к покупке всегда, на протяжении '
+  - ' &96D2FF│ всего сезона. '
+  - '&7'
+  - '&7'
+  - ' &FF5B29★ ▪ Эксклюзивные'
+  - '&7'
+  - ' &FF9B7D│ Значки из данной категории недоступны'
+  - ' &FF9B7D│ для покупки в магазине, их можно получить'
+  - ' &FF9B7D│ только на ивентах или за помощь'
+  - ' &FF9B7D│ в общественных делах сервера.'
+  - '&7'
 
 clear-all:
   slot: 50
-  material: "BARRIER"
-  name: "&FF5555Отключить все значки"
+  material: BARRIER
+  name: '&7'
   lore:
-    - "&7"
-    - "&B8B8B8Скрывает все значки рядом с ником."
-    - "&FFFFFFНажми, чтобы отключить отображение."
-    - "&7"
+  - '&FF2121 ✘ — Снять все значки '
+  - '&7'
+  - ' &FF8A8A▪ Чтобы снять все значки, нажмите на '
+  - ' &FF8A8A  эту кнопку '
+  - '&7'
 
 empty-state:
   size: 45
   paper:
     slot: 20
-    material: "PAPER"
-    name: "&FFFFFFКак получить значки?"
+    material: PAPER
+    name: '&7'
     lore:
-      - "&7"
-      - "&B8B8B8Значки можно получить за события,"
-      - "&B8B8B8активность и особые достижения."
-      - "&7"
+    - ' &63FF4F✎ — Как получить значки?'
+    - '&7'
+    - ' &#C0FFB8▪ Значки можно получить за события, '
+    - ' &#C0FFB8  активность и особые достижения '
+    - '&7'
   apple:
     slot: 24
-    material: "APPLE"
-    name: "&FFD166Начни собирать коллекцию"
+    material: APPLE
+    name: '&7'
     lore:
-      - "&7"
-      - "&B8B8B8Играй на сервере и следи за событиями,"
-      - "&B8B8B8чтобы получить свой первый значок."
-      - "&7"
+    - ' &FF512E☆ — Начни собирать коллекцию '
+    - '&7'
+    - ' &FF9D8A▪ Играй на сервере и следи за событиями,'
+    - ' &FF9D8A  чтобы получить свой первый значок.'
+    - '&7'
