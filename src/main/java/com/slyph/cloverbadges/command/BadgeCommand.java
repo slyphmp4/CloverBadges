@@ -13,11 +13,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public final class BadgeCommand implements CommandExecutor {
     private final CloverBadges plugin;
@@ -49,130 +46,14 @@ public final class BadgeCommand implements CommandExecutor {
         }
 
         return switch (args[0].toLowerCase()) {
-            case "list" -> list(sender);
-            case "select" -> select(sender, args);
-            case "info" -> info(sender, args);
             case "give" -> give(sender, args);
             case "remove" -> remove(sender, args);
-            case "set" -> set(sender, args);
             case "reload" -> reload(sender);
             default -> {
                 sendHelp(sender);
                 yield true;
             }
         };
-    }
-
-    private boolean list(CommandSender sender) {
-        if (!sender.hasPermission("cloverbadges.list")) {
-            messages.send(sender, "no-permission");
-            return true;
-        }
-        if (!(sender instanceof Player player)) {
-            messages.send(sender, "player-only");
-            return true;
-        }
-
-        messages.send(sender, "list-header");
-        Set<String> owned = service.getOwnedBadgeIds(player);
-        Set<String> active = new LinkedHashSet<>(service.getActiveBadgeIds(player));
-        if (owned.isEmpty()) {
-            messages.send(sender, "list-empty");
-        } else {
-            for (String id : owned) {
-                String selected = active.contains(id) ? messages.firstRaw("selected-mark") : "";
-                messages.send(sender, "list-entry", Map.of(
-                        "id", id,
-                        "name", service.getBadgeName(id),
-                        "remaining", service.formatRemaining(player, id),
-                        "priority", Integer.toString(service.getBadgePriority(id)),
-                        "selected", selected
-                ));
-            }
-        }
-        messages.send(sender, "list-footer");
-        return true;
-    }
-
-    private boolean select(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("cloverbadges.select")) {
-            messages.send(sender, "no-permission");
-            return true;
-        }
-        if (!(sender instanceof Player player)) {
-            messages.send(sender, "player-only");
-            return true;
-        }
-        if (args.length < 2) {
-            sendHelp(sender);
-            return true;
-        }
-
-        if (args[1].equalsIgnoreCase("none") || args[1].equalsIgnoreCase("off")) {
-            service.clearSelection(player);
-            messages.send(sender, "badge-cleared");
-            return true;
-        }
-
-        if (args[1].equalsIgnoreCase("auto")) {
-            service.enableAutomaticSelection(player);
-            messages.send(sender, "badge-auto");
-            return true;
-        }
-
-        String id = args[1].toLowerCase();
-        if (service.getDefinition(id).isEmpty()) {
-            messages.send(sender, "badge-not-found", Map.of("badge", id));
-            return true;
-        }
-        if (!service.select(player, id)) {
-            messages.send(sender, "badge-not-owned", Map.of("badge", id));
-            return true;
-        }
-
-        messages.send(sender, "badge-selected", Map.of("badge", service.getBadgeName(id)));
-        return true;
-    }
-
-    private boolean info(CommandSender sender, String[] args) {
-        OfflinePlayer target;
-        if (args.length >= 2) {
-            if (!sender.hasPermission("cloverbadges.admin.info")) {
-                messages.send(sender, "no-permission");
-                return true;
-            }
-            target = findPlayer(args[1]);
-            if (target == null) {
-                messages.send(sender, "player-not-found", Map.of("player", args[1]));
-                return true;
-            }
-        } else {
-            if (!sender.hasPermission("cloverbadges.info")) {
-                messages.send(sender, "no-permission");
-                return true;
-            }
-            if (!(sender instanceof Player player)) {
-                messages.send(sender, "player-only");
-                return true;
-            }
-            target = player;
-        }
-
-        String active = service.getActiveBadgeIds(target).stream()
-                .map(service::getBadgeName)
-                .collect(Collectors.joining(" &8+ "));
-        if (active.isBlank()) {
-            active = "&B8B8B8нет";
-        }
-
-        messages.send(sender, "info", Map.of(
-                "player", displayName(target),
-                "active", active,
-                "active_count", Integer.toString(service.getActiveBadgeIds(target).size()),
-                "newcomer", service.isNewcomer(target) ? "да" : "нет",
-                "newcomer_remaining", service.formatNewcomerRemaining(target)
-        ));
-        return true;
     }
 
     private boolean give(CommandSender sender, String[] args) {
@@ -266,54 +147,6 @@ public final class BadgeCommand implements CommandExecutor {
         return true;
     }
 
-    private boolean set(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("cloverbadges.admin.set")) {
-            messages.send(sender, "no-permission");
-            return true;
-        }
-        if (args.length < 3) {
-            sendHelp(sender);
-            return true;
-        }
-
-        OfflinePlayer target = findPlayer(args[1]);
-        if (target == null) {
-            messages.send(sender, "player-not-found", Map.of("player", args[1]));
-            return true;
-        }
-
-        if (args[2].equalsIgnoreCase("none") || args[2].equalsIgnoreCase("off")) {
-            service.clearSelection(target);
-            messages.send(sender, "badge-set-none-other", Map.of("player", displayName(target)));
-            return true;
-        }
-
-        if (args[2].equalsIgnoreCase("auto")) {
-            service.enableAutomaticSelection(target);
-            messages.send(sender, "badge-set-auto-other", Map.of("player", displayName(target)));
-            return true;
-        }
-
-        String id = args[2].toLowerCase();
-        if (service.getDefinition(id).isEmpty()) {
-            messages.send(sender, "badge-not-found", Map.of("badge", id));
-            return true;
-        }
-        if (!service.select(target, id)) {
-            messages.send(sender, "target-badge-not-owned", Map.of(
-                    "player", displayName(target),
-                    "badge", id
-            ));
-            return true;
-        }
-
-        messages.send(sender, "badge-set-other", Map.of(
-                "player", displayName(target),
-                "badge", service.getBadgeName(id)
-        ));
-        return true;
-    }
-
     private boolean reload(CommandSender sender) {
         if (!sender.hasPermission("cloverbadges.admin.reload")) {
             messages.send(sender, "no-permission");
@@ -326,26 +159,11 @@ public final class BadgeCommand implements CommandExecutor {
 
     private void sendHelp(CommandSender sender) {
         messages.send(sender, "help-header");
-        if (sender.hasPermission("cloverbadges.list")) {
-            messages.send(sender, "help-list");
-        }
-        if (sender.hasPermission("cloverbadges.select")) {
-            messages.send(sender, "help-select");
-        }
-        if (sender.hasPermission("cloverbadges.info")) {
-            messages.send(sender, "help-info");
-        }
-        if (sender.hasPermission("cloverbadges.admin.info")) {
-            messages.send(sender, "help-admin-info");
-        }
         if (sender.hasPermission("cloverbadges.admin.give")) {
             messages.send(sender, "help-give");
         }
         if (sender.hasPermission("cloverbadges.admin.remove")) {
             messages.send(sender, "help-remove");
-        }
-        if (sender.hasPermission("cloverbadges.admin.set")) {
-            messages.send(sender, "help-set");
         }
         if (sender.hasPermission("cloverbadges.admin.reload")) {
             messages.send(sender, "help-reload");

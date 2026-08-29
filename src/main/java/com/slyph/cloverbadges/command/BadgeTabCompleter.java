@@ -29,44 +29,20 @@ public final class BadgeTabCompleter implements TabCompleter {
 
         if (args.length == 1) {
             List<String> values = new ArrayList<>();
-            addIf(sender, values, "list", "cloverbadges.list");
-            addIf(sender, values, "select", "cloverbadges.select");
-            addIf(sender, values, "info", "cloverbadges.info");
-            addIf(sender, values, "info", "cloverbadges.admin.info");
             addIf(sender, values, "give", "cloverbadges.admin.give");
             addIf(sender, values, "remove", "cloverbadges.admin.remove");
-            addIf(sender, values, "set", "cloverbadges.admin.set");
             addIf(sender, values, "reload", "cloverbadges.admin.reload");
             return filter(values, args[0]);
         }
 
         String sub = args[0].toLowerCase(Locale.ROOT);
-        if (sub.equals("select") && args.length == 2 && sender instanceof Player player && sender.hasPermission("cloverbadges.select")) {
-            List<String> values = new ArrayList<>(service.getOwnedBadgeIds(player));
-            values.add("auto");
-            values.add("none");
-            values.add("off");
-            return filter(values, args[1]);
-        }
-
-        if (sub.equals("info") && args.length == 2 && sender.hasPermission("cloverbadges.admin.info")) {
-            return filter(onlineNames(), args[1]);
-        }
-
         if ((sub.equals("give") && sender.hasPermission("cloverbadges.admin.give"))
-                || (sub.equals("remove") && sender.hasPermission("cloverbadges.admin.remove"))
-                || (sub.equals("set") && sender.hasPermission("cloverbadges.admin.set"))) {
+                || (sub.equals("remove") && sender.hasPermission("cloverbadges.admin.remove"))) {
             if (args.length == 2) {
                 return filter(onlineNames(), args[1]);
             }
             if (args.length == 3) {
-                List<String> values = new ArrayList<>(service.allBadgeIds());
-                if (sub.equals("set")) {
-                    values.add("auto");
-                    values.add("none");
-                    values.add("off");
-                }
-                return filter(values, args[2]);
+                return filter(service.allBadgeIds(), args[2]);
             }
         }
 
