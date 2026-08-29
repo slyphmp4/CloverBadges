@@ -32,7 +32,7 @@ public final class BadgeMenuListener implements Listener {
         if (rawSlot < 0 || rawSlot >= event.getView().getTopInventory().getSize()) {
             return;
         }
-        menuManager.handleClick(player, holder, rawSlot);
+        menuManager.handleClick(player, holder, rawSlot, event.getClick());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

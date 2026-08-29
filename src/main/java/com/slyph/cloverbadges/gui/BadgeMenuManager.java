@@ -1,8 +1,7 @@
 package com.slyph.cloverbadges.gui;
 
 import com.slyph.cloverbadges.config.ConfigManager;
-import com.slyph.cloverbadges.message.MessageService;
-import com.slyph.cloverbadges.player.BadgeToggleResult;
+import com.slyph.cloverbadges.gui.action.BadgeActionExecutor;
 import com.slyph.cloverbadges.player.PlayerBadgeService;
 import com.slyph.cloverbadges.util.ColorUtil;
 import net.kyori.adventure.text.Component;
@@ -11,6 +10,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -27,12 +27,12 @@ public final class BadgeMenuManager {
     private static final List<Integer> DEFAULT_BADGE_SLOTS = List.of(20, 21, 22, 23, 24, 29, 30, 31, 32, 33);
     private final ConfigManager configManager;
     private final PlayerBadgeService badgeService;
-    private final MessageService messages;
+    private final BadgeActionExecutor actionExecutor;
 
-    public BadgeMenuManager(ConfigManager configManager, PlayerBadgeService badgeService, MessageService messages) {
+    public BadgeMenuManager(ConfigManager configManager, PlayerBadgeService badgeService, BadgeActionExecutor actionExecutor) {
         this.configManager = configManager;
         this.badgeService = badgeService;
-        this.messages = messages;
+        this.actionExecutor = actionExecutor;
     }
 
     public void open(Player player) {
@@ -51,7 +51,7 @@ public final class BadgeMenuManager {
         player.openInventory(inventory);
     }
 
-    public void handleClick(Player player, BadgeMenuHolder holder, int rawSlot) {
+    public void handleClick(Player player, BadgeMenuHolder holder, int rawSlot, ClickType clickType) {
         if (!holder.playerId().equals(player.getUniqueId())) {
             return;
         }
@@ -73,13 +73,24 @@ public final class BadgeMenuManager {
             return;
         }
 
-        BadgeToggleResult result = badgeService.toggleDisplay(player, badgeId);
-        if (result == BadgeToggleResult.LIMIT_REACHED) {
-            messages.send(player, "gui-max-active", Map.of(
-                    "max", Integer.toString(badgeService.maxVisibleBadges())
-            ));
+        int ownedCount = badgeService.getOwnedBadgeIds(player).size();
+        int activeCount = badgeService.getActiveBadgeIds(player).size();
+        boolean active = badgeService.getActiveBadgeIds(player).contains(badgeId);
+        List<String> actions = badgeActions(badgeId, active, clickType);
+        BadgeActionExecutor.Result result = actionExecutor.execute(
+                player,
+                badgeId,
+                actions,
+                input -> applyPlaceholders(input, player, badgeId, ownedCount, activeCount)
+        );
+
+        if (result.close()) {
+            player.closeInventory();
+            return;
         }
-        render(holder, player);
+        if (result.refresh()) {
+            render(holder, player);
+        }
     }
 
     private void render(BadgeMenuHolder holder, Player player) {
@@ -129,26 +140,138 @@ public final class BadgeMenuManager {
         YamlConfiguration badges = configManager.badges();
         YamlConfiguration gui = configManager.gui();
         String base = "badges." + badgeId + ".gui.";
-        String stateKey = active ? "lore-active" : "lore-inactive";
+        String state = active ? "active" : "inactive";
 
-        String materialName = badges.contains(base + "material")
-                ? badges.getString(base + "material", gui.getString("badge.material", "PLAYER_HEAD"))
-                : gui.getString("badge.material", "PLAYER_HEAD");
+        String materialName = badgeString(badges, gui, base, "material-" + state, "material", "PLAYER_HEAD");
         Material material = material(materialName, Material.PLAYER_HEAD);
         ItemStack item = new ItemStack(material);
+        item.setAmount(Math.max(1, Math.min(material.getMaxStackSize(), badgeInt(badges, gui, base, "amount-" + state, "amount", 1))));
         ItemMeta meta = item.getItemMeta();
 
-        String name = badges.contains(base + "name")
-                ? badges.getString(base + "name", gui.getString("badge.name", "{name}"))
-                : gui.getString("badge.name", "{name}");
+        String name = badgeString(badges, gui, base, "name-" + state, "name", "{name}");
         meta.displayName(guiText(applyPlaceholders(name, player, badgeId, ownedCount, activeCount)));
 
-        List<String> lore = badges.isList(base + stateKey)
-                ? badges.getStringList(base + stateKey)
-                : gui.getStringList("badge." + stateKey);
+        List<String> lore = badgeLore(badges, gui, base, state);
         meta.lore(renderLore(lore, player, badgeId, ownedCount, activeCount));
         item.setItemMeta(meta);
         return item;
+    }
+
+    private String badgeString(YamlConfiguration badges, YamlConfiguration gui, String base, String stateKey, String commonKey, String fallback) {
+        if (badges.contains(base + stateKey)) {
+            return badges.getString(base + stateKey, fallback);
+        }
+        if (badges.contains(base + commonKey)) {
+            return badges.getString(base + commonKey, fallback);
+        }
+        if (gui.contains("badge." + stateKey)) {
+            return gui.getString("badge." + stateKey, fallback);
+        }
+        return gui.getString("badge." + commonKey, fallback);
+    }
+
+    private int badgeInt(YamlConfiguration badges, YamlConfiguration gui, String base, String stateKey, String commonKey, int fallback) {
+        if (badges.contains(base + stateKey)) {
+            return badges.getInt(base + stateKey, fallback);
+        }
+        if (badges.contains(base + commonKey)) {
+            return badges.getInt(base + commonKey, fallback);
+        }
+        if (gui.contains("badge." + stateKey)) {
+            return gui.getInt("badge." + stateKey, fallback);
+        }
+        return gui.getInt("badge." + commonKey, fallback);
+    }
+
+    private List<String> badgeLore(YamlConfiguration badges, YamlConfiguration gui, String base, String state) {
+        String statePath = base + "lore-" + state;
+        if (badges.isList(statePath)) {
+            return badges.getStringList(statePath);
+        }
+        if (badges.isList(base + "lore")) {
+            return badges.getStringList(base + "lore");
+        }
+        if (gui.isList("badge.lore-" + state)) {
+            return gui.getStringList("badge.lore-" + state);
+        }
+        return gui.getStringList("badge.lore");
+    }
+
+    private List<String> badgeActions(String badgeId, boolean active, ClickType clickType) {
+        YamlConfiguration badges = configManager.badges();
+        YamlConfiguration gui = configManager.gui();
+        String base = "badges." + badgeId + ".gui.";
+        String click = clickKey(clickType);
+        String state = active ? "actions-active." : "actions-inactive.";
+
+        List<String> paths = List.of(
+                state + click,
+                state + "any",
+                "actions." + click,
+                "actions.any"
+        );
+
+        for (String path : paths) {
+            List<String> configured = actionList(badges, base + path);
+            if (configured != null) {
+                return configured;
+            }
+        }
+        for (String path : paths) {
+            List<String> configured = actionList(gui, "badge." + path);
+            if (configured != null) {
+                return configured;
+            }
+        }
+        return List.of("[toggle]");
+    }
+
+    private List<String> actionList(YamlConfiguration configuration, String path) {
+        if (!configuration.contains(path)) {
+            return null;
+        }
+        if (configuration.isList(path)) {
+            return configuration.getStringList(path);
+        }
+        String value = configuration.getString(path);
+        if (value == null || value.isBlank()) {
+            return List.of();
+        }
+        return List.of(value);
+    }
+
+    private String clickKey(ClickType clickType) {
+        if (clickType == ClickType.SHIFT_LEFT) {
+            return "shift-left";
+        }
+        if (clickType == ClickType.SHIFT_RIGHT) {
+            return "shift-right";
+        }
+        if (clickType == ClickType.LEFT) {
+            return "left";
+        }
+        if (clickType == ClickType.RIGHT) {
+            return "right";
+        }
+        if (clickType == ClickType.MIDDLE) {
+            return "middle";
+        }
+        if (clickType == ClickType.DROP) {
+            return "drop";
+        }
+        if (clickType == ClickType.CONTROL_DROP) {
+            return "control-drop";
+        }
+        if (clickType == ClickType.DOUBLE_CLICK) {
+            return "double";
+        }
+        if (clickType == ClickType.NUMBER_KEY) {
+            return "number";
+        }
+        if (clickType == ClickType.SWAP_OFFHAND) {
+            return "swap-offhand";
+        }
+        return "any";
     }
 
     private ItemStack configuredItem(String path, Player player, String badgeId, int ownedCount, int activeCount, Material fallbackMaterial) {
@@ -184,9 +307,12 @@ public final class BadgeMenuManager {
         replacements.put("max_owned", Integer.toString(badgeService.maxOwnedBadges()));
         replacements.put("max_active", Integer.toString(badgeService.maxVisibleBadges()));
         if (badgeId != null) {
+            boolean active = badgeService.getActiveBadgeIds(player).contains(badgeId);
             replacements.put("id", badgeId);
             replacements.put("name", badgeService.getBadgeName(badgeId));
             replacements.put("remaining", badgeService.formatRemaining(player, badgeId));
+            replacements.put("state", active ? "active" : "inactive");
+            replacements.put("active", Boolean.toString(active));
         }
         for (Map.Entry<String, String> entry : replacements.entrySet()) {
             value = value.replace("{" + entry.getKey() + "}", entry.getValue());

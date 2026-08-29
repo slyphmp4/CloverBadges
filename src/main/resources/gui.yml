@@ -16,6 +16,7 @@ menu:
 
 badge:
   material: "PLAYER_HEAD"
+  amount: 1
   name: "{name}"
   lore-active:
     - "&7"
@@ -27,6 +28,9 @@ badge:
     - "&B8B8B8Сейчас значок скрыт"
     - "&FFFFFFНажми, чтобы включить значок."
     - "&7"
+  actions:
+    any:
+      - "[toggle]"
 
 empty-slot:
   material: "LIGHT_GRAY_STAINED_GLASS_PANE"

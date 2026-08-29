@@ -7,6 +7,7 @@ import com.slyph.cloverbadges.command.BadgeTabCompleter;
 import com.slyph.cloverbadges.config.ConfigManager;
 import com.slyph.cloverbadges.gui.BadgeMenuListener;
 import com.slyph.cloverbadges.gui.BadgeMenuManager;
+import com.slyph.cloverbadges.gui.action.BadgeActionExecutor;
 import com.slyph.cloverbadges.listener.PlayerListener;
 import com.slyph.cloverbadges.message.MessageService;
 import com.slyph.cloverbadges.placeholder.CloverBadgesExpansion;
@@ -34,7 +35,8 @@ public final class CloverBadges extends JavaPlugin {
         messageService = new MessageService(configManager);
         PlayerDataStore dataStore = new PlayerDataStore(this);
         badgeService = new PlayerBadgeService(this, badgeRegistry, dataStore);
-        BadgeMenuManager menuManager = new BadgeMenuManager(configManager, badgeService, messageService);
+        BadgeActionExecutor actionExecutor = new BadgeActionExecutor(this, badgeService, messageService);
+        BadgeMenuManager menuManager = new BadgeMenuManager(configManager, badgeService, actionExecutor);
 
         PluginCommand badgeCommand = Objects.requireNonNull(getCommand("badge"));
         badgeCommand.setExecutor(new BadgeCommand(this, badgeService, messageService, menuManager));
