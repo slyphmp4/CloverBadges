@@ -29,10 +29,8 @@ public final class BadgeTabCompleter implements TabCompleter {
 
         if (args.length == 1) {
             List<String> values = new ArrayList<>();
-            addIf(sender, values, "menu", "cloverbadges.menu");
             addIf(sender, values, "list", "cloverbadges.list");
             addIf(sender, values, "select", "cloverbadges.select");
-            addIf(sender, values, "off", "cloverbadges.select");
             addIf(sender, values, "info", "cloverbadges.info");
             addIf(sender, values, "info", "cloverbadges.admin.info");
             addIf(sender, values, "give", "cloverbadges.admin.give");

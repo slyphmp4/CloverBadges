@@ -49,10 +49,8 @@ public final class BadgeCommand implements CommandExecutor {
         }
 
         return switch (args[0].toLowerCase()) {
-            case "menu" -> menu(sender);
             case "list" -> list(sender);
             case "select" -> select(sender, args);
-            case "off" -> off(sender);
             case "info" -> info(sender, args);
             case "give" -> give(sender, args);
             case "remove" -> remove(sender, args);
@@ -63,19 +61,6 @@ public final class BadgeCommand implements CommandExecutor {
                 yield true;
             }
         };
-    }
-
-    private boolean menu(CommandSender sender) {
-        if (!sender.hasPermission("cloverbadges.menu")) {
-            messages.send(sender, "no-permission");
-            return true;
-        }
-        if (!(sender instanceof Player player)) {
-            messages.send(sender, "player-only");
-            return true;
-        }
-        menuManager.open(player);
-        return true;
     }
 
     private boolean list(CommandSender sender) {
@@ -146,21 +131,6 @@ public final class BadgeCommand implements CommandExecutor {
         }
 
         messages.send(sender, "badge-selected", Map.of("badge", service.getBadgeName(id)));
-        return true;
-    }
-
-    private boolean off(CommandSender sender) {
-        if (!sender.hasPermission("cloverbadges.select")) {
-            messages.send(sender, "no-permission");
-            return true;
-        }
-        if (!(sender instanceof Player player)) {
-            messages.send(sender, "player-only");
-            return true;
-        }
-
-        service.clearSelection(player);
-        messages.send(sender, "badge-cleared");
         return true;
     }
 
@@ -356,15 +326,11 @@ public final class BadgeCommand implements CommandExecutor {
 
     private void sendHelp(CommandSender sender) {
         messages.send(sender, "help-header");
-        if (sender.hasPermission("cloverbadges.menu")) {
-            messages.send(sender, "help-menu");
-        }
         if (sender.hasPermission("cloverbadges.list")) {
             messages.send(sender, "help-list");
         }
         if (sender.hasPermission("cloverbadges.select")) {
             messages.send(sender, "help-select");
-            messages.send(sender, "help-off");
         }
         if (sender.hasPermission("cloverbadges.info")) {
             messages.send(sender, "help-info");
