@@ -1,7 +1,7 @@
 menu:
   title: "&8Значки"
-  size: 45
-  layout-version: 5
+  size: 54
+  layout-version: 6
   badge-slots:
     - 20
     - 21
@@ -67,7 +67,7 @@ empty-slot:
     - "&7"
 
 info-book:
-  slot: 39
+  slot: 48
   material: "BOOK"
   name: "&FFFFFFКатегории значков"
   lore:
@@ -90,7 +90,7 @@ info-book:
     - "&7"
 
 clear-all:
-  slot: 41
+  slot: 50
   material: "BARRIER"
   name: "&FF5555Отключить все значки"
   lore:
@@ -100,6 +100,7 @@ clear-all:
     - "&7"
 
 empty-state:
+  size: 45
   paper:
     slot: 20
     material: "PAPER"

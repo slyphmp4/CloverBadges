@@ -138,6 +138,22 @@ public final class ConfigManager {
                 configuration.set("clear-all.slot", 41);
             }
             configuration.set("menu.layout-version", 5);
+            layoutVersion = 5;
+        }
+        if (layoutVersion < 6) {
+            if (configuration.getInt("menu.size", 45) == 45) {
+                configuration.set("menu.size", 54);
+            }
+            if (configuration.getInt("info-book.slot", 39) == 39) {
+                configuration.set("info-book.slot", 48);
+            }
+            if (configuration.getInt("clear-all.slot", 41) == 41) {
+                configuration.set("clear-all.slot", 50);
+            }
+            if (!configuration.contains("empty-state.size")) {
+                configuration.set("empty-state.size", 45);
+            }
+            configuration.set("menu.layout-version", 6);
         }
     }
 
