@@ -14,13 +14,16 @@ public final class ConfigManager {
     private final CloverBadges plugin;
     private final File badgesFile;
     private final File messagesFile;
+    private final File guiFile;
     private volatile YamlConfiguration badges;
     private volatile YamlConfiguration messages;
+    private volatile YamlConfiguration gui;
 
     public ConfigManager(CloverBadges plugin) {
         this.plugin = plugin;
         this.badgesFile = new File(plugin.getDataFolder(), "badges.yml");
         this.messagesFile = new File(plugin.getDataFolder(), "messages.yml");
+        this.guiFile = new File(plugin.getDataFolder(), "gui.yml");
         ensureFiles();
         reload();
     }
@@ -33,6 +36,9 @@ public final class ConfigManager {
         if (!messagesFile.exists()) {
             plugin.saveResource("messages.yml", false);
         }
+        if (!guiFile.exists()) {
+            plugin.saveResource("gui.yml", false);
+        }
     }
 
     public void reload() {
@@ -41,6 +47,7 @@ public final class ConfigManager {
         plugin.saveConfig();
         badges = loadWithDefaults(badgesFile, "badges.yml");
         messages = loadWithDefaults(messagesFile, "messages.yml");
+        gui = loadWithDefaults(guiFile, "gui.yml");
     }
 
     private YamlConfiguration loadWithDefaults(File file, String resourceName) {
@@ -99,5 +106,9 @@ public final class ConfigManager {
 
     public YamlConfiguration messages() {
         return messages;
+    }
+
+    public YamlConfiguration gui() {
+        return gui;
     }
 }
