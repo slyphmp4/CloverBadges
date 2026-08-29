@@ -10,6 +10,7 @@ badges:
       - "&C2C2C2Недавно присоединился к серверу."
     gui:
       material: "PLAYER_HEAD"
+      amount: 1
       name: "{name}"
       lore-active:
         - "&7"
@@ -22,3 +23,6 @@ badges:
         - "&B8B8B8Осталось: &FFFFFF{remaining}"
         - "&FFFFFFНажми, чтобы включить значок."
         - "&7"
+      actions:
+        any:
+          - "[toggle]"
