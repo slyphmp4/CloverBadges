@@ -9,7 +9,6 @@ import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.bukkit.profile.PlayerProfile;
 import org.bukkit.profile.PlayerTextures;
 
 import java.io.IOException;
@@ -106,10 +105,16 @@ public final class CustomHeadService {
             return;
         }
 
-        if (applyRawTexture(skullMeta, texture)) {
+        if (applyPaperTexture(skullMeta, texture)) {
             return;
         }
-        applyUrlTexture(skullMeta, texture);
+        if (applyBukkitTexture(skullMeta, texture)) {
+            return;
+        }
+
+        if (warnedTextures.add(texture.url())) {
+            plugin.getLogger().warning("Failed to apply custom head texture on " + Bukkit.getName() + " " + Bukkit.getVersion() + ".");
+        }
     }
 
     public Optional<String> resolveTextureUrl(String minecraftHeadsName) {
@@ -123,37 +128,30 @@ public final class CustomHeadService {
         return Optional.ofNullable(resolvedTextures.get(normalizeName(minecraftHeadsName)));
     }
 
-    private boolean applyRawTexture(SkullMeta skullMeta, TextureData texture) {
+    private boolean applyPaperTexture(SkullMeta skullMeta, TextureData texture) {
         try {
             UUID profileId = UUID.nameUUIDFromBytes(("CloverBadges:" + texture.url()).getBytes(StandardCharsets.UTF_8));
-            PlayerProfile profile = Bukkit.createPlayerProfile(profileId);
-            if (!(profile instanceof com.destroystokyo.paper.profile.PlayerProfile paperProfile)) {
-                return false;
-            }
-            paperProfile.setProperty(new ProfileProperty("textures", texture.value()));
-            skullMeta.setPlayerProfile(paperProfile);
+            com.destroystokyo.paper.profile.PlayerProfile profile = Bukkit.createProfile(profileId);
+            profile.clearProperties();
+            profile.setProperty(new ProfileProperty("textures", texture.value()));
+            skullMeta.setPlayerProfile(profile);
             return true;
         } catch (Throwable throwable) {
             return false;
         }
     }
 
-    private void applyUrlTexture(SkullMeta skullMeta, TextureData texture) {
+    private boolean applyBukkitTexture(SkullMeta skullMeta, TextureData texture) {
         try {
             UUID profileId = UUID.nameUUIDFromBytes(("CloverBadges:" + texture.url()).getBytes(StandardCharsets.UTF_8));
-            PlayerProfile profile = Bukkit.createPlayerProfile(profileId);
+            org.bukkit.profile.PlayerProfile profile = Bukkit.createPlayerProfile(profileId);
             PlayerTextures textures = profile.getTextures();
             textures.setSkin(URI.create(texture.url()).toURL());
             profile.setTextures(textures);
-            if (profile instanceof com.destroystokyo.paper.profile.PlayerProfile paperProfile) {
-                skullMeta.setPlayerProfile(paperProfile);
-            } else {
-                skullMeta.setOwnerProfile(profile);
-            }
-        } catch (Exception exception) {
-            if (warnedTextures.add(texture.url())) {
-                plugin.getLogger().warning("Failed to apply custom head texture: " + exception.getMessage());
-            }
+            skullMeta.setOwnerProfile(profile);
+            return true;
+        } catch (Throwable throwable) {
+            return false;
         }
     }
 
@@ -360,8 +358,7 @@ public final class CustomHeadService {
         if (normalizedUrl.isEmpty()) {
             return Optional.empty();
         }
-        String normalizedValue = Base64.getEncoder().encodeToString(decoded);
-        return Optional.of(new TextureData(normalizedUrl.get(), normalizedValue));
+        return Optional.of(textureData(normalizedUrl.get()));
     }
 
     private Optional<TextureData> textureFromUrl(String value) {
@@ -369,9 +366,13 @@ public final class CustomHeadService {
         if (normalizedUrl.isEmpty()) {
             return Optional.empty();
         }
-        String json = "{\"textures\":{\"SKIN\":{\"url\":\"" + normalizedUrl.get() + "\"}}}";
+        return Optional.of(textureData(normalizedUrl.get()));
+    }
+
+    private TextureData textureData(String normalizedUrl) {
+        String json = "{\"textures\":{\"SKIN\":{\"url\":\"" + normalizedUrl + "\"}}}";
         String encoded = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
-        return Optional.of(new TextureData(normalizedUrl.get(), encoded));
+        return new TextureData(normalizedUrl, encoded);
     }
 
     private Optional<String> normalizeTextureUrl(String value) {
