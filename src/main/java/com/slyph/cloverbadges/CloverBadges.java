@@ -8,6 +8,7 @@ import com.slyph.cloverbadges.config.ConfigManager;
 import com.slyph.cloverbadges.gui.BadgeMenuListener;
 import com.slyph.cloverbadges.gui.BadgeMenuManager;
 import com.slyph.cloverbadges.gui.action.BadgeActionExecutor;
+import com.slyph.cloverbadges.head.CustomHeadService;
 import com.slyph.cloverbadges.listener.PlayerListener;
 import com.slyph.cloverbadges.message.MessageService;
 import com.slyph.cloverbadges.placeholder.CloverBadgesExpansion;
@@ -25,6 +26,7 @@ public final class CloverBadges extends JavaPlugin {
     private BadgeRegistry badgeRegistry;
     private MessageService messageService;
     private PlayerBadgeService badgeService;
+    private CustomHeadService customHeadService;
     private CloverBadgesExpansion expansion;
     private BukkitTask cleanupTask;
 
@@ -35,8 +37,9 @@ public final class CloverBadges extends JavaPlugin {
         messageService = new MessageService(configManager);
         PlayerDataStore dataStore = new PlayerDataStore(this);
         badgeService = new PlayerBadgeService(this, badgeRegistry, dataStore);
+        customHeadService = new CustomHeadService(this, configManager);
         BadgeActionExecutor actionExecutor = new BadgeActionExecutor(this, badgeService, messageService);
-        BadgeMenuManager menuManager = new BadgeMenuManager(configManager, badgeService, actionExecutor);
+        BadgeMenuManager menuManager = new BadgeMenuManager(configManager, badgeService, actionExecutor, customHeadService);
 
         PluginCommand badgeCommand = Objects.requireNonNull(getCommand("badge"));
         badgeCommand.setExecutor(new BadgeCommand(this, badgeService, messageService, menuManager));
@@ -51,6 +54,7 @@ public final class CloverBadges extends JavaPlugin {
             expansion.register();
         }
 
+        customHeadService.reload();
         scheduleCleanup();
         getLogger().info("CloverBadges v" + getPluginMeta().getVersion() + " enabled");
     }
@@ -63,6 +67,9 @@ public final class CloverBadges extends JavaPlugin {
         if (expansion != null) {
             expansion.unregister();
         }
+        if (customHeadService != null) {
+            customHeadService.shutdown();
+        }
         if (badgeService != null) {
             badgeService.saveAll();
         }
@@ -72,6 +79,7 @@ public final class CloverBadges extends JavaPlugin {
     public void reloadPlugin() {
         configManager.reload();
         badgeRegistry.reload();
+        customHeadService.reload();
         scheduleCleanup();
     }
 
