@@ -13,6 +13,8 @@ import org.bukkit.profile.PlayerTextures;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -106,15 +108,30 @@ public final class CustomHeadService {
             return;
         }
 
-        if (applyPaperTexture(skullMeta, texture)) {
-            return;
-        }
-        if (applyBukkitTexture(skullMeta, texture)) {
-            return;
+        LinkedHashMap<String, Throwable> failures = new LinkedHashMap<>();
+
+        if (isCardboard()) {
+            Throwable cardboardFailure = applyCardboardTexture(skullMeta, texture);
+            if (cardboardFailure == null) {
+                return;
+            }
+            failures.put("cardboard", cardboardFailure);
         }
 
+        Throwable paperFailure = applyPaperTexture(skullMeta, texture);
+        if (paperFailure == null) {
+            return;
+        }
+        failures.put("paper", paperFailure);
+
+        Throwable bukkitFailure = applyBukkitTexture(skullMeta, texture);
+        if (bukkitFailure == null) {
+            return;
+        }
+        failures.put("bukkit", bukkitFailure);
+
         if (warnedTextures.add(texture.url())) {
-            plugin.getLogger().warning("Failed to apply custom head texture on " + Bukkit.getName() + " " + Bukkit.getVersion() + ".");
+            plugin.getLogger().warning("Failed to apply custom head texture on " + Bukkit.getName() + " " + Bukkit.getVersion() + ". " + failureSummary(failures));
         }
     }
 
@@ -129,31 +146,95 @@ public final class CustomHeadService {
         return Optional.ofNullable(resolvedTextures.get(normalizeName(minecraftHeadsName)));
     }
 
-    private boolean applyPaperTexture(SkullMeta skullMeta, TextureData texture) {
+    private boolean isCardboard() {
+        return Bukkit.getName().toLowerCase(Locale.ROOT).contains("cardboard")
+                || Bukkit.getVersion().toLowerCase(Locale.ROOT).contains("cardboard");
+    }
+
+    private Throwable applyCardboardTexture(SkullMeta skullMeta, TextureData texture) {
         try {
-            UUID profileId = UUID.nameUUIDFromBytes(("CloverBadges:" + texture.url()).getBytes(StandardCharsets.UTF_8));
+            UUID profileId = profileId(texture);
+            org.bukkit.profile.PlayerProfile profile = Bukkit.createPlayerProfile(profileId, PROFILE_NAME);
+            PlayerTextures textures = profile.getTextures();
+            textures.setSkin(URI.create(texture.url()).toURL());
+            profile.setTextures(textures);
+
+            Object resolvableProfile = profile.getClass().getMethod("buildResolvableProfile").invoke(profile);
+            Field profileField = findField(skullMeta.getClass(), "profile");
+            if (profileField == null) {
+                return new IllegalStateException("CraftMetaSkull.profile field not found");
+            }
+            profileField.setAccessible(true);
+            profileField.set(skullMeta, resolvableProfile);
+            return null;
+        } catch (Throwable throwable) {
+            return unwrap(throwable);
+        }
+    }
+
+    private Throwable applyPaperTexture(SkullMeta skullMeta, TextureData texture) {
+        try {
+            UUID profileId = profileId(texture);
             com.destroystokyo.paper.profile.PlayerProfile profile = Bukkit.createProfile(profileId, PROFILE_NAME);
             profile.clearProperties();
             profile.setProperty(new ProfileProperty("textures", texture.value()));
             skullMeta.setPlayerProfile(profile);
-            return true;
+            return null;
         } catch (Throwable throwable) {
-            return false;
+            return unwrap(throwable);
         }
     }
 
-    private boolean applyBukkitTexture(SkullMeta skullMeta, TextureData texture) {
+    private Throwable applyBukkitTexture(SkullMeta skullMeta, TextureData texture) {
         try {
-            UUID profileId = UUID.nameUUIDFromBytes(("CloverBadges:" + texture.url()).getBytes(StandardCharsets.UTF_8));
+            UUID profileId = profileId(texture);
             org.bukkit.profile.PlayerProfile profile = Bukkit.createPlayerProfile(profileId, PROFILE_NAME);
             PlayerTextures textures = profile.getTextures();
             textures.setSkin(URI.create(texture.url()).toURL());
             profile.setTextures(textures);
             skullMeta.setOwnerProfile(profile);
-            return true;
+            return null;
         } catch (Throwable throwable) {
-            return false;
+            return unwrap(throwable);
         }
+    }
+
+    private UUID profileId(TextureData texture) {
+        return UUID.nameUUIDFromBytes(("CloverBadges:" + texture.url()).getBytes(StandardCharsets.UTF_8));
+    }
+
+    private Field findField(Class<?> type, String name) {
+        Class<?> current = type;
+        while (current != null) {
+            try {
+                return current.getDeclaredField(name);
+            } catch (NoSuchFieldException ignored) {
+                current = current.getSuperclass();
+            }
+        }
+        return null;
+    }
+
+    private Throwable unwrap(Throwable throwable) {
+        Throwable current = throwable;
+        while (current instanceof InvocationTargetException invocation && invocation.getTargetException() != null) {
+            current = invocation.getTargetException();
+        }
+        return current;
+    }
+
+    private String failureSummary(Map<String, Throwable> failures) {
+        List<String> parts = new ArrayList<>();
+        for (Map.Entry<String, Throwable> entry : failures.entrySet()) {
+            Throwable throwable = entry.getValue();
+            String message = throwable.getMessage();
+            String detail = throwable.getClass().getSimpleName();
+            if (message != null && !message.isBlank()) {
+                detail += ": " + message;
+            }
+            parts.add(entry.getKey() + "=" + detail);
+        }
+        return String.join("; ", parts);
     }
 
     private void sync(long syncGeneration, Set<String> configuredNames, ApiSettings settings) {
