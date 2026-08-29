@@ -1,0 +1,31 @@
+colors:
+  rose:
+    name: "&FF6B8AРозовый"
+    format: "&FF6B8A{player}"
+    permission: ""
+    priority: 60
+  amber:
+    name: "&FFD166Янтарный"
+    format: "&FFD166{player}"
+    permission: ""
+    priority: 50
+  mint:
+    name: "&63E6BEМятный"
+    format: "&63E6BE{player}"
+    permission: ""
+    priority: 40
+  sky:
+    name: "&74C0FCНебесный"
+    format: "&74C0FC{player}"
+    permission: ""
+    priority: 30
+  violet:
+    name: "&B197FCФиолетовый"
+    format: "&B197FC{player}"
+    permission: ""
+    priority: 20
+  coral:
+    name: "&FF8A65Коралловый"
+    format: "&FF8A65{player}"
+    permission: ""
+    priority: 10
