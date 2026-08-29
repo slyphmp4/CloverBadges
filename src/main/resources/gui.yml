@@ -1,7 +1,7 @@
 menu:
   title: "&8Значки"
   size: 54
-  layout-version: 6
+  layout-version: 7
   badge-slots:
     - 20
     - 21
@@ -13,6 +13,33 @@ menu:
     - 31
     - 32
     - 33
+
+nickname-colors:
+  title: "&8Покраски никнеймов"
+  size: 54
+
+page-switcher:
+  slot: 4
+  material: "PLAYER_HEAD"
+  amount: 1
+  head:
+    minecraft-heads: ""
+    value: ""
+  name: "&7"
+  lore:
+    - "&7"
+    - "&FFFFFFОткрыть: &B8B8B8{target_page}"
+    - "&7"
+  badges-page:
+    lore:
+      - "&7"
+      - "&FFFFFFПерейти к покраскам никнеймов"
+      - "&7"
+  nickname-colors-page:
+    lore:
+      - "&7"
+      - "&FFFFFFВернуться к значкам"
+      - "&7"
 
 badge:
   material: "PLAYER_HEAD"
