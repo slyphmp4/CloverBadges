@@ -13,7 +13,6 @@ import org.bukkit.profile.PlayerTextures;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -154,25 +153,17 @@ public final class CustomHeadService {
     }
 
     private Throwable applyCardboardTexture(SkullMeta skullMeta, TextureData texture) {
-        String stage = "runtime classes";
+        String stage = "player profile";
         try {
-            ClassLoader loader = skullMeta.getClass().getClassLoader();
-            Class<?> gameProfileClass = runtimeClass("com.mojang.authlib.GameProfile", loader);
-            Class<?> propertyClass = runtimeClass("com.mojang.authlib.properties.Property", loader);
-            Class<?> propertyMapClass = runtimeClass("com.mojang.authlib.properties.PropertyMap", loader);
-            Class<?> resolvableProfileClass = runtimeClass("net.minecraft.world.item.component.ResolvableProfile", loader);
+            org.bukkit.profile.PlayerProfile profile = Bukkit.createPlayerProfile(profileId(texture), PROFILE_NAME);
 
             stage = "textures property";
-            Object propertyMap = propertyMapClass.getConstructor().newInstance();
-            Object property = propertyClass.getConstructor(String.class, String.class).newInstance("textures", texture.value());
-            putProperty(propertyMap, property);
-
-            stage = "GameProfile";
-            Object gameProfile = createGameProfile(gameProfileClass, propertyMapClass, profileId(texture), propertyMap, property);
+            Method setProperty = profile.getClass().getMethod("setProperty", ProfileProperty.class);
+            setProperty.invoke(profile, new ProfileProperty("textures", texture.value()));
 
             stage = "ResolvableProfile";
-            Method createResolved = resolvableProfileClass.getMethod("createResolved", gameProfileClass);
-            Object resolvableProfile = createResolved.invoke(null, gameProfile);
+            Method buildResolvableProfile = profile.getClass().getMethod("buildResolvableProfile");
+            Object resolvableProfile = buildResolvableProfile.invoke(profile);
 
             stage = "CraftMetaSkull.profile";
             Field profileField = findField(skullMeta.getClass(), "profile");
@@ -191,44 +182,6 @@ public final class CustomHeadService {
             }
             return new IllegalStateException(detail, cause);
         }
-    }
-
-    private Object createGameProfile(Class<?> gameProfileClass, Class<?> propertyMapClass, UUID profileId, Object propertyMap, Object property) throws ReflectiveOperationException {
-        try {
-            Constructor<?> constructor = gameProfileClass.getConstructor(UUID.class, String.class, propertyMapClass);
-            return constructor.newInstance(profileId, PROFILE_NAME, propertyMap);
-        } catch (NoSuchMethodException ignored) {
-            Constructor<?> constructor = gameProfileClass.getConstructor(UUID.class, String.class);
-            Object gameProfile = constructor.newInstance(profileId, PROFILE_NAME);
-            Object gameProfileProperties = gameProfileClass.getMethod("properties").invoke(gameProfile);
-            putProperty(gameProfileProperties, property);
-            return gameProfile;
-        }
-    }
-
-    private void putProperty(Object propertyMap, Object property) throws ReflectiveOperationException {
-        Method putMethod = null;
-        for (Method method : propertyMap.getClass().getMethods()) {
-            if (!method.getName().equals("put") || method.getParameterCount() != 2) {
-                continue;
-            }
-            putMethod = method;
-            break;
-        }
-        if (putMethod == null) {
-            throw new NoSuchMethodException(propertyMap.getClass().getName() + ".put");
-        }
-        putMethod.invoke(propertyMap, "textures", property);
-    }
-
-    private Class<?> runtimeClass(String name, ClassLoader loader) throws ClassNotFoundException {
-        if (loader != null) {
-            try {
-                return Class.forName(name, true, loader);
-            } catch (ClassNotFoundException ignored) {
-            }
-        }
-        return Class.forName(name);
     }
 
     private Throwable applyPaperTexture(SkullMeta skullMeta, TextureData texture) {
