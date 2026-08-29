@@ -23,6 +23,10 @@ messages:
     - '&7'
     - '&C72B2B❌  &FF9089|  &FF5A5AЗначок не найден'
     - '&7'
+  badge-already-owned:
+    - '&7'
+    - '&C72B2B❌  &FF9089|  &FF5A5AУ игрока {player} уже есть значок {badge}'
+    - '&7'
   target-badge-not-owned:
     - '&7'
     - '&C72B2B❌  &FF9089|  &FF5A5AУ игрока {player} нет значка {badge}'
