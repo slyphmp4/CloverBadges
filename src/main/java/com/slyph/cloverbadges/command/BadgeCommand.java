@@ -1,6 +1,7 @@
 package com.slyph.cloverbadges.command;
 
 import com.slyph.cloverbadges.CloverBadges;
+import com.slyph.cloverbadges.gui.BadgeMenuManager;
 import com.slyph.cloverbadges.message.MessageService;
 import com.slyph.cloverbadges.player.PlayerBadgeService;
 import com.slyph.cloverbadges.util.DurationParser;
@@ -22,11 +23,13 @@ public final class BadgeCommand implements CommandExecutor {
     private final CloverBadges plugin;
     private final PlayerBadgeService service;
     private final MessageService messages;
+    private final BadgeMenuManager menuManager;
 
-    public BadgeCommand(CloverBadges plugin, PlayerBadgeService service, MessageService messages) {
+    public BadgeCommand(CloverBadges plugin, PlayerBadgeService service, MessageService messages, BadgeMenuManager menuManager) {
         this.plugin = plugin;
         this.service = service;
         this.messages = messages;
+        this.menuManager = menuManager;
     }
 
     @Override
@@ -37,11 +40,16 @@ public final class BadgeCommand implements CommandExecutor {
         }
 
         if (args.length == 0) {
-            sendHelp(sender);
+            if (sender instanceof Player player && sender.hasPermission("cloverbadges.menu")) {
+                menuManager.open(player);
+            } else {
+                sendHelp(sender);
+            }
             return true;
         }
 
         return switch (args[0].toLowerCase()) {
+            case "menu" -> menu(sender);
             case "list" -> list(sender);
             case "select" -> select(sender, args);
             case "off" -> off(sender);
@@ -55,6 +63,19 @@ public final class BadgeCommand implements CommandExecutor {
                 yield true;
             }
         };
+    }
+
+    private boolean menu(CommandSender sender) {
+        if (!sender.hasPermission("cloverbadges.menu")) {
+            messages.send(sender, "no-permission");
+            return true;
+        }
+        if (!(sender instanceof Player player)) {
+            messages.send(sender, "player-only");
+            return true;
+        }
+        menuManager.open(player);
+        return true;
     }
 
     private boolean list(CommandSender sender) {
@@ -211,7 +232,14 @@ public final class BadgeCommand implements CommandExecutor {
             return true;
         }
 
-        service.grant(target, id, parsed.get());
+        if (!service.grant(target, id, parsed.get())) {
+            messages.send(sender, "badge-limit-owned", Map.of(
+                    "player", displayName(target),
+                    "max", Integer.toString(service.maxOwnedBadges())
+            ));
+            return true;
+        }
+
         String duration = parsed.get().permanent()
                 ? plugin.getConfig().getString("placeholders.permanent-text", "навсегда")
                 : DurationParser.format(parsed.get().millis());
@@ -328,6 +356,9 @@ public final class BadgeCommand implements CommandExecutor {
 
     private void sendHelp(CommandSender sender) {
         messages.send(sender, "help-header");
+        if (sender.hasPermission("cloverbadges.menu")) {
+            messages.send(sender, "help-menu");
+        }
         if (sender.hasPermission("cloverbadges.list")) {
             messages.send(sender, "help-list");
         }
