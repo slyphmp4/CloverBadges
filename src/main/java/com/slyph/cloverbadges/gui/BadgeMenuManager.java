@@ -61,7 +61,7 @@ public final class BadgeMenuManager {
             return;
         }
 
-        int clearSlot = validSlot(configManager.gui().getInt("clear-all.slot", 50), inventory.getSize(), 50);
+        int clearSlot = validSlot(configManager.gui().getInt("clear-all.slot", 41), inventory.getSize(), 41);
         if (rawSlot == clearSlot && !badgeService.getOwnedBadgeIds(player).isEmpty()) {
             badgeService.clearSelection(player);
             render(holder, player);
@@ -122,10 +122,10 @@ public final class BadgeMenuManager {
             }
         }
 
-        int infoBookSlot = validSlot(configManager.gui().getInt("info-book.slot", 48), inventory.getSize(), 48);
+        int infoBookSlot = validSlot(configManager.gui().getInt("info-book.slot", 39), inventory.getSize(), 39);
         inventory.setItem(infoBookSlot, configuredItem("info-book", player, null, owned.size(), active.size(), Material.BOOK));
 
-        int clearSlot = validSlot(configManager.gui().getInt("clear-all.slot", 50), inventory.getSize(), 50);
+        int clearSlot = validSlot(configManager.gui().getInt("clear-all.slot", 41), inventory.getSize(), 41);
         inventory.setItem(clearSlot, configuredItem("clear-all", player, null, owned.size(), active.size(), Material.BARRIER));
     }
 
@@ -344,7 +344,7 @@ public final class BadgeMenuManager {
     }
 
     private int inventorySize() {
-        int requested = configManager.gui().getInt("menu.size", 54);
+        int requested = configManager.gui().getInt("menu.size", 45);
         int clamped = Math.max(9, Math.min(54, requested));
         int rounded = ((clamped + 8) / 9) * 9;
         return Math.min(54, rounded);
