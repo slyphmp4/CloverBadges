@@ -13,9 +13,6 @@ import org.bukkit.profile.PlayerTextures;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -111,14 +108,6 @@ public final class CustomHeadService {
 
         LinkedHashMap<String, Throwable> failures = new LinkedHashMap<>();
 
-        if (isCardboard()) {
-            Throwable cardboardFailure = applyCardboardTexture(skullMeta, texture);
-            if (cardboardFailure == null) {
-                return;
-            }
-            failures.put("cardboard", cardboardFailure);
-        }
-
         Throwable paperFailure = applyPaperTexture(skullMeta, texture);
         if (paperFailure == null) {
             return;
@@ -132,7 +121,7 @@ public final class CustomHeadService {
         failures.put("bukkit", bukkitFailure);
 
         if (warnedTextures.add(texture.url())) {
-            plugin.getLogger().warning("Failed to apply custom head texture on " + Bukkit.getName() + " " + Bukkit.getVersion() + ". " + failureSummary(failures));
+            plugin.getLogger().warning("Failed to apply custom head texture through standard profile APIs on " + Bukkit.getName() + " " + Bukkit.getVersion() + ". " + failureSummary(failures));
         }
     }
 
@@ -147,92 +136,33 @@ public final class CustomHeadService {
         return Optional.ofNullable(resolvedTextures.get(normalizeName(minecraftHeadsName)));
     }
 
-    private boolean isCardboard() {
-        return Bukkit.getName().toLowerCase(Locale.ROOT).contains("cardboard")
-                || Bukkit.getVersion().toLowerCase(Locale.ROOT).contains("cardboard");
-    }
-
-    private Throwable applyCardboardTexture(SkullMeta skullMeta, TextureData texture) {
-        String stage = "player profile";
-        try {
-            org.bukkit.profile.PlayerProfile profile = Bukkit.createPlayerProfile(profileId(texture), PROFILE_NAME);
-
-            stage = "textures property";
-            Method setProperty = profile.getClass().getMethod("setProperty", ProfileProperty.class);
-            setProperty.invoke(profile, new ProfileProperty("textures", texture.value()));
-
-            stage = "ResolvableProfile";
-            Method buildResolvableProfile = profile.getClass().getMethod("buildResolvableProfile");
-            Object resolvableProfile = buildResolvableProfile.invoke(profile);
-
-            stage = "CraftMetaSkull.profile";
-            Field profileField = findField(skullMeta.getClass(), "profile");
-            if (profileField == null) {
-                return new IllegalStateException("CraftMetaSkull.profile field not found");
-            }
-            profileField.setAccessible(true);
-            profileField.set(skullMeta, resolvableProfile);
-            return null;
-        } catch (Throwable throwable) {
-            Throwable cause = unwrap(throwable);
-            String message = cause.getMessage();
-            String detail = stage + " -> " + cause.getClass().getSimpleName();
-            if (message != null && !message.isBlank()) {
-                detail += ": " + message;
-            }
-            return new IllegalStateException(detail, cause);
-        }
-    }
-
     private Throwable applyPaperTexture(SkullMeta skullMeta, TextureData texture) {
         try {
-            UUID profileId = profileId(texture);
-            com.destroystokyo.paper.profile.PlayerProfile profile = Bukkit.createProfile(profileId, PROFILE_NAME);
+            com.destroystokyo.paper.profile.PlayerProfile profile = Bukkit.createProfile(profileId(texture), PROFILE_NAME);
             profile.clearProperties();
             profile.setProperty(new ProfileProperty("textures", texture.value()));
             skullMeta.setPlayerProfile(profile);
             return null;
         } catch (Throwable throwable) {
-            return unwrap(throwable);
+            return throwable;
         }
     }
 
     private Throwable applyBukkitTexture(SkullMeta skullMeta, TextureData texture) {
         try {
-            UUID profileId = profileId(texture);
-            org.bukkit.profile.PlayerProfile profile = Bukkit.createPlayerProfile(profileId, PROFILE_NAME);
+            org.bukkit.profile.PlayerProfile profile = Bukkit.createPlayerProfile(profileId(texture), PROFILE_NAME);
             PlayerTextures textures = profile.getTextures();
             textures.setSkin(URI.create(texture.url()).toURL());
             profile.setTextures(textures);
             skullMeta.setOwnerProfile(profile);
             return null;
         } catch (Throwable throwable) {
-            return unwrap(throwable);
+            return throwable;
         }
     }
 
     private UUID profileId(TextureData texture) {
         return UUID.nameUUIDFromBytes(("CloverBadges:" + texture.url()).getBytes(StandardCharsets.UTF_8));
-    }
-
-    private Field findField(Class<?> type, String name) {
-        Class<?> current = type;
-        while (current != null) {
-            try {
-                return current.getDeclaredField(name);
-            } catch (NoSuchFieldException ignored) {
-                current = current.getSuperclass();
-            }
-        }
-        return null;
-    }
-
-    private Throwable unwrap(Throwable throwable) {
-        Throwable current = throwable;
-        while (current instanceof InvocationTargetException invocation && invocation.getTargetException() != null) {
-            current = invocation.getTargetException();
-        }
-        return current;
     }
 
     private String failureSummary(Map<String, Throwable> failures) {
