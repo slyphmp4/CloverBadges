@@ -10,15 +10,21 @@ import java.util.UUID;
 
 public final class BadgeMenuHolder implements InventoryHolder {
     private final UUID playerId;
+    private final MenuPage page;
     private final Map<Integer, String> badgeSlots = new HashMap<>();
     private Inventory inventory;
 
-    public BadgeMenuHolder(UUID playerId) {
+    public BadgeMenuHolder(UUID playerId, MenuPage page) {
         this.playerId = playerId;
+        this.page = page;
     }
 
     public UUID playerId() {
         return playerId;
+    }
+
+    public MenuPage page() {
+        return page;
     }
 
     public void inventory(Inventory inventory) {
