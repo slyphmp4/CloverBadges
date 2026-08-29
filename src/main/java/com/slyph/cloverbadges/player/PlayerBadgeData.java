@@ -8,17 +8,18 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class PlayerBadgeData {
     private final UUID uuid;
     private final Map<String, BadgeGrant> grants;
+    private final Set<String> selectedBadges;
     private final Set<String> suppressedAutomaticBadges;
     private volatile long firstSeen;
-    private volatile String selectedBadge;
     private volatile boolean selectionDisabled;
 
-    public PlayerBadgeData(UUID uuid, long firstSeen, String selectedBadge, boolean selectionDisabled, Map<String, BadgeGrant> grants, Set<String> suppressedAutomaticBadges) {
+    public PlayerBadgeData(UUID uuid, long firstSeen, Set<String> selectedBadges, boolean selectionDisabled, Map<String, BadgeGrant> grants, Set<String> suppressedAutomaticBadges) {
         this.uuid = uuid;
         this.firstSeen = firstSeen;
-        this.selectedBadge = selectedBadge;
         this.selectionDisabled = selectionDisabled;
         this.grants = new ConcurrentHashMap<>(grants);
+        this.selectedBadges = ConcurrentHashMap.newKeySet();
+        this.selectedBadges.addAll(selectedBadges);
         this.suppressedAutomaticBadges = ConcurrentHashMap.newKeySet();
         this.suppressedAutomaticBadges.addAll(suppressedAutomaticBadges);
     }
@@ -35,12 +36,8 @@ public final class PlayerBadgeData {
         this.firstSeen = firstSeen;
     }
 
-    public String selectedBadge() {
-        return selectedBadge;
-    }
-
-    public void selectedBadge(String selectedBadge) {
-        this.selectedBadge = selectedBadge;
+    public Set<String> selectedBadges() {
+        return selectedBadges;
     }
 
     public boolean selectionDisabled() {
