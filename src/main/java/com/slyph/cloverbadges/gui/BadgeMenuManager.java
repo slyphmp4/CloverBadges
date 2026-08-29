@@ -6,6 +6,7 @@ import com.slyph.cloverbadges.player.BadgeToggleResult;
 import com.slyph.cloverbadges.player.PlayerBadgeService;
 import com.slyph.cloverbadges.util.ColorUtil;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -60,7 +61,7 @@ public final class BadgeMenuManager {
             return;
         }
 
-        int clearSlot = validSlot(configManager.gui().getInt("clear-all.slot", 40), inventory.getSize(), 40);
+        int clearSlot = validSlot(configManager.gui().getInt("clear-all.slot", 49), inventory.getSize(), 49);
         if (rawSlot == clearSlot && !badgeService.getOwnedBadgeIds(player).isEmpty()) {
             badgeService.clearSelection(player);
             render(holder, player);
@@ -110,7 +111,7 @@ public final class BadgeMenuManager {
             }
         }
 
-        int clearSlot = validSlot(configManager.gui().getInt("clear-all.slot", 40), inventory.getSize(), 40);
+        int clearSlot = validSlot(configManager.gui().getInt("clear-all.slot", 49), inventory.getSize(), 49);
         inventory.setItem(clearSlot, configuredItem("clear-all", player, null, owned.size(), active.size(), Material.BARRIER));
     }
 
@@ -137,7 +138,7 @@ public final class BadgeMenuManager {
         String name = badges.contains(base + "name")
                 ? badges.getString(base + "name", gui.getString("badge.name", "{name}"))
                 : gui.getString("badge.name", "{name}");
-        meta.displayName(ColorUtil.component(applyPlaceholders(name, player, badgeId, ownedCount, activeCount)));
+        meta.displayName(guiText(applyPlaceholders(name, player, badgeId, ownedCount, activeCount)));
 
         List<String> lore = badges.isList(base + stateKey)
                 ? badges.getStringList(base + stateKey)
@@ -153,7 +154,7 @@ public final class BadgeMenuManager {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         String name = gui.getString(path + ".name", " ");
-        meta.displayName(ColorUtil.component(applyPlaceholders(name, player, badgeId, ownedCount, activeCount)));
+        meta.displayName(guiText(applyPlaceholders(name, player, badgeId, ownedCount, activeCount)));
         meta.lore(renderLore(gui.getStringList(path + ".lore"), player, badgeId, ownedCount, activeCount));
         item.setItemMeta(meta);
         return item;
@@ -162,9 +163,13 @@ public final class BadgeMenuManager {
     private List<Component> renderLore(List<String> lines, Player player, String badgeId, int ownedCount, int activeCount) {
         List<Component> result = new ArrayList<>();
         for (String line : lines) {
-            result.add(ColorUtil.component(applyPlaceholders(line, player, badgeId, ownedCount, activeCount)));
+            result.add(guiText(applyPlaceholders(line, player, badgeId, ownedCount, activeCount)));
         }
         return result;
+    }
+
+    private Component guiText(String text) {
+        return ColorUtil.component(text).decoration(TextDecoration.ITALIC, false);
     }
 
     private String applyPlaceholders(String input, Player player, String badgeId, int ownedCount, int activeCount) {
