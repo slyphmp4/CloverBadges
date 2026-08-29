@@ -44,7 +44,7 @@ public final class BadgeMenuManager {
                 badgeService.getOwnedBadgeIds(player).size(),
                 badgeService.getActiveBadgeIds(player).size()
         );
-        Inventory inventory = Bukkit.createInventory(holder, size, ColorUtil.component(title));
+        Inventory inventory = Bukkit.createInventory(holder, size, ColorUtil.legacySection(title));
         holder.inventory(inventory);
         render(holder, player);
         player.openInventory(inventory);
@@ -55,7 +55,12 @@ public final class BadgeMenuManager {
             return;
         }
 
-        int clearSlot = validSlot(configManager.gui().getInt("clear-all.slot", 40), holder.getInventory().getSize(), 40);
+        Inventory inventory = holder.getInventory();
+        if (inventory == null) {
+            return;
+        }
+
+        int clearSlot = validSlot(configManager.gui().getInt("clear-all.slot", 40), inventory.getSize(), 40);
         if (rawSlot == clearSlot && !badgeService.getOwnedBadgeIds(player).isEmpty()) {
             badgeService.clearSelection(player);
             render(holder, player);
@@ -78,6 +83,9 @@ public final class BadgeMenuManager {
 
     private void render(BadgeMenuHolder holder, Player player) {
         Inventory inventory = holder.getInventory();
+        if (inventory == null) {
+            return;
+        }
         inventory.clear();
         holder.clearBadgeSlots();
 
