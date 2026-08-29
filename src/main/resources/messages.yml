@@ -1,60 +1,61 @@
 messages:
   help-header:
-    - "&7"
-    - "&FFD166CloverBadges &8• &FFFFFFКоманды"
+    - '&7'
+    - '&FFD166CloverBadges &8• &FFFFFFКоманды'
+    - '&7'
   help-give:
-    - "&FFFFFF/badge give <игрок> <id> [время|permanent]"
+    - '&787878▪ &FFFFFF/badge give <игрок> <id> [время|permanent]'
   help-remove:
-    - "&FFFFFF/badge remove <игрок> <id>"
+    - '&787878▪ &FFFFFF/badge remove <игрок> <id>'
   help-reload:
-    - "&FFFFFF/badge reload"
+    - '&787878▪ &FFFFFF/badge reload'
   help-footer:
-    - "&7"
+    - '&7'
   no-permission:
-    - "&7"
-    - "&FF5555У тебя нет прав на эту команду."
-    - "&7"
+    - '&7'
+    - '&C72B2B❌  &FF9089|  &FF5A5AУ вас нет права на эту команду'
+    - '&7'
   player-not-found:
-    - "&7"
-    - "&FF5555Игрок &FFFFFF{player} &FF5555не найден."
-    - "&7"
+    - '&7'
+    - '&C72B2B❌  &FF9089|  &FF5A5AИгрок {player} не найден'
+    - '&7'
   badge-not-found:
-    - "&7"
-    - "&FF5555Бейдж &FFFFFF{badge} &FF5555не найден."
-    - "&7"
+    - '&7'
+    - '&C72B2B❌  &FF9089|  &FF5A5AЗначок не найден'
+    - '&7'
   target-badge-not-owned:
-    - "&7"
-    - "&FF5555У игрока &FFFFFF{player} &FF5555нет бейджа &FFFFFF{badge}&FF5555."
-    - "&7"
+    - '&7'
+    - '&C72B2B❌  &FF9089|  &FF5A5AУ игрока {player} нет значка {badge}'
+    - '&7'
   badge-given:
-    - "&7"
-    - "&55FF88Игроку &FFFFFF{player} &55FF88выдан бейдж {badge} &55FF88на &FFFFFF{duration}&55FF88."
-    - "&7"
+    - '&7'
+    - '&86E96E✔  &6DBF58|  &86E96EИгроку {player} выдан значок {badge} на {duration}'
+    - '&7'
   badge-received:
-    - "&7"
-    - "&55FF88Ты получил бейдж {badge} &55FF88на &FFFFFF{duration}&55FF88."
-    - "&7"
+    - '&7'
+    - '&86E96E✔  &6DBF58|  &86E96EТы получил значок {badge} на {duration}'
+    - '&7'
   badge-remove-success:
-    - "&7"
-    - "&55FF88У игрока &FFFFFF{player} &55FF88удалён бейдж {badge}&55FF88."
-    - "&7"
+    - '&7'
+    - '&86E96E✔  &6DBF58|  &86E96EУ игрока {player} удалён значок {badge}'
+    - '&7'
   badge-removed:
-    - "&7"
-    - "&FFAA55У тебя забрали бейдж {badge}&FFAA55."
-    - "&7"
+    - '&7'
+    - '&6EE9E5🔔  &58B1BF|  &6EE9E5У тебя забрали значок {badge}'
+    - '&7'
   invalid-duration:
-    - "&7"
-    - "&FF5555Неверное время. Примеры: &FFFFFF30m&FF5555, &FFFFFF12h&FF5555, &FFFFFF7d&FF5555, &FFFFFF2w&FF5555, &FFFFFFpermanent&FF5555."
-    - "&7"
+    - '&7'
+    - '&C72B2B❌  &FF9089|  &FF5A5AНеверное время'
+    - '&7'
   badge-limit-owned:
-    - "&7"
-    - "&FF5555У игрока &FFFFFF{player} &FF5555уже собрано максимум значков: &FFFFFF{max}&FF5555."
-    - "&7"
+    - '&7'
+    - '&C72B2B❌  &FF9089|  &FF5A5AУ игрока {player} уже собрано максимум значков: {max}'
+    - '&7'
   gui-max-active:
-    - "&7"
-    - "&FFAA55Одновременно рядом с ником можно отображать максимум &FFFFFF{max} &FFAA55значка."
-    - "&7"
+    - '&7'
+    - '&E9C66E⓪  &C2A65E|  &E9C66EОдновременно рядом с ником можно отображать максимум {max} значка'
+    - '&7'
   reload:
-    - "&7"
-    - "&55FF88CloverBadges перезагружен."
-    - "&7"
+    - '&7'
+    - '&86E96E✔  &6DBF58|  &86E96ECloverBadges перезагружен!'
+    - '&7'
