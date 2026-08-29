@@ -71,9 +71,18 @@ public final class BadgeCommand implements CommandExecutor {
             messages.send(sender, "player-not-found", Map.of("player", args[1]));
             return true;
         }
+
         String id = args[2].toLowerCase();
         if (service.getDefinition(id).isEmpty()) {
             messages.send(sender, "badge-not-found", Map.of("badge", id));
+            return true;
+        }
+
+        if (service.hasBadge(target, id)) {
+            messages.send(sender, "badge-already-owned", Map.of(
+                    "player", displayName(target),
+                    "badge", service.getBadgeName(id)
+            ));
             return true;
         }
 
@@ -122,15 +131,25 @@ public final class BadgeCommand implements CommandExecutor {
             messages.send(sender, "player-not-found", Map.of("player", args[1]));
             return true;
         }
+
         String id = args[2].toLowerCase();
         if (service.getDefinition(id).isEmpty()) {
             messages.send(sender, "badge-not-found", Map.of("badge", id));
             return true;
         }
+
+        if (!service.hasBadge(target, id)) {
+            messages.send(sender, "target-badge-not-owned", Map.of(
+                    "player", displayName(target),
+                    "badge", service.getBadgeName(id)
+            ));
+            return true;
+        }
+
         if (!service.revoke(target, id)) {
             messages.send(sender, "target-badge-not-owned", Map.of(
                     "player", displayName(target),
-                    "badge", id
+                    "badge", service.getBadgeName(id)
             ));
             return true;
         }
