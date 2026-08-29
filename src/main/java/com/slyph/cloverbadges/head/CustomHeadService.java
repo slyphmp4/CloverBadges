@@ -145,7 +145,11 @@ public final class CustomHeadService {
             PlayerTextures textures = profile.getTextures();
             textures.setSkin(URI.create(texture.url()).toURL());
             profile.setTextures(textures);
-            skullMeta.setPlayerProfile(profile);
+            if (profile instanceof com.destroystokyo.paper.profile.PlayerProfile paperProfile) {
+                skullMeta.setPlayerProfile(paperProfile);
+            } else {
+                skullMeta.setOwnerProfile(profile);
+            }
         } catch (Exception exception) {
             if (warnedTextures.add(texture.url())) {
                 plugin.getLogger().warning("Failed to apply custom head texture: " + exception.getMessage());
