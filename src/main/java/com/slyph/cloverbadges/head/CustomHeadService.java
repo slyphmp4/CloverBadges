@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 
 public final class CustomHeadService {
     private static final String BASE_API = "https://minecraft-heads.com/api/heads";
+    private static final String PROFILE_NAME = "CloverBadge";
     private static final Pattern TEXTURE_URL_PATTERN = Pattern.compile("\\\"url\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"", Pattern.CASE_INSENSITIVE);
     private static final Pattern TEXTURE_HASH_PATTERN = Pattern.compile("^[0-9a-fA-F]{32,128}$");
 
@@ -131,7 +132,7 @@ public final class CustomHeadService {
     private boolean applyPaperTexture(SkullMeta skullMeta, TextureData texture) {
         try {
             UUID profileId = UUID.nameUUIDFromBytes(("CloverBadges:" + texture.url()).getBytes(StandardCharsets.UTF_8));
-            com.destroystokyo.paper.profile.PlayerProfile profile = Bukkit.createProfile(profileId);
+            com.destroystokyo.paper.profile.PlayerProfile profile = Bukkit.createProfile(profileId, PROFILE_NAME);
             profile.clearProperties();
             profile.setProperty(new ProfileProperty("textures", texture.value()));
             skullMeta.setPlayerProfile(profile);
@@ -144,7 +145,7 @@ public final class CustomHeadService {
     private boolean applyBukkitTexture(SkullMeta skullMeta, TextureData texture) {
         try {
             UUID profileId = UUID.nameUUIDFromBytes(("CloverBadges:" + texture.url()).getBytes(StandardCharsets.UTF_8));
-            org.bukkit.profile.PlayerProfile profile = Bukkit.createPlayerProfile(profileId);
+            org.bukkit.profile.PlayerProfile profile = Bukkit.createPlayerProfile(profileId, PROFILE_NAME);
             PlayerTextures textures = profile.getTextures();
             textures.setSkin(URI.create(texture.url()).toURL());
             profile.setTextures(textures);
