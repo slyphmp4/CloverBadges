@@ -17,6 +17,7 @@ permissions:
     default: op
     children:
       cloverbadges.use: true
+      cloverbadges.menu: true
       cloverbadges.list: true
       cloverbadges.select: true
       cloverbadges.info: true
@@ -30,6 +31,8 @@ permissions:
       cloverbadges.admin.set: true
       cloverbadges.admin.reload: true
   cloverbadges.use:
+    default: true
+  cloverbadges.menu:
     default: true
   cloverbadges.list:
     default: true

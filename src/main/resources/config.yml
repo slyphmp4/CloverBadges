@@ -5,12 +5,14 @@ newcomer:
   auto-display: true
 
 selection:
-  auto-select-first-granted-badge: true
   clear-invalid-selection: true
 
 display:
   max-badges: 2
   separator: " "
+
+limits:
+  max-owned-badges: 10
 
 placeholders:
   empty-value: ""

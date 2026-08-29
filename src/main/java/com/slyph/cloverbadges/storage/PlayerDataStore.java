@@ -50,10 +50,19 @@ public final class PlayerDataStore {
 
             String path = "players." + rawUuid;
             long firstSeen = yaml.getLong(path + ".first-seen", 0L);
-            String selected = yaml.getString(path + ".selected", "");
-            if (selected != null && selected.isBlank()) {
-                selected = null;
+            Set<String> selectedBadges = new LinkedHashSet<>();
+            for (String badgeId : yaml.getStringList(path + ".selected-badges")) {
+                if (badgeId != null && !badgeId.isBlank()) {
+                    selectedBadges.add(badgeId.toLowerCase());
+                }
             }
+            if (selectedBadges.isEmpty()) {
+                String legacySelected = yaml.getString(path + ".selected", "");
+                if (legacySelected != null && !legacySelected.isBlank()) {
+                    selectedBadges.add(legacySelected.toLowerCase());
+                }
+            }
+
             boolean disabled = yaml.getBoolean(path + ".selection-disabled", false);
             Map<String, BadgeGrant> grants = new LinkedHashMap<>();
             ConfigurationSection grantSection = yaml.getConfigurationSection(path + ".grants");
@@ -74,7 +83,7 @@ public final class PlayerDataStore {
             result.put(uuid, new PlayerBadgeData(
                     uuid,
                     firstSeen,
-                    selected,
+                    selectedBadges,
                     disabled,
                     grants,
                     suppressedAutomaticBadges
@@ -88,7 +97,7 @@ public final class PlayerDataStore {
         for (PlayerBadgeData playerData : data) {
             String path = "players." + playerData.uuid();
             yaml.set(path + ".first-seen", playerData.firstSeen());
-            yaml.set(path + ".selected", playerData.selectedBadge() == null ? "" : playerData.selectedBadge());
+            yaml.set(path + ".selected-badges", playerData.selectedBadges().stream().sorted().toList());
             yaml.set(path + ".selection-disabled", playerData.selectionDisabled());
             yaml.set(path + ".suppressed-automatic-badges", playerData.suppressedAutomaticBadges().stream().sorted().toList());
             for (Map.Entry<String, BadgeGrant> entry : playerData.grants().entrySet()) {
