@@ -36,7 +36,7 @@ public final class CloverBadges extends JavaPlugin {
         PlayerDataStore dataStore = new PlayerDataStore(this);
         badgeService = new PlayerBadgeService(this, badgeRegistry, dataStore);
         BadgeActionExecutor actionExecutor = new BadgeActionExecutor(this, badgeService, messageService);
-        BadgeMenuManager menuManager = new BadgeMenuManager(configManager, badgeService, messageService, actionExecutor);
+        BadgeMenuManager menuManager = new BadgeMenuManager(configManager, badgeService, actionExecutor);
 
         PluginCommand badgeCommand = Objects.requireNonNull(getCommand("badge"));
         badgeCommand.setExecutor(new BadgeCommand(this, badgeService, messageService, menuManager));
