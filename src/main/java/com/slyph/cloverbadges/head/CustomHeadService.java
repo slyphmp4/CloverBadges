@@ -319,6 +319,9 @@ public final class CustomHeadService {
         addConfiguredName(result, gui.getString("badge.head.minecraft-heads"));
         addConfiguredName(result, gui.getString("badge.head-active.minecraft-heads"));
         addConfiguredName(result, gui.getString("badge.head-inactive.minecraft-heads"));
+        addConfiguredName(result, gui.getString("page-switcher.head.minecraft-heads"));
+        addConfiguredName(result, gui.getString("page-switcher.badges-page.head.minecraft-heads"));
+        addConfiguredName(result, gui.getString("page-switcher.nickname-colors-page.head.minecraft-heads"));
 
         ConfigurationSection badges = gui.getConfigurationSection("badges");
         if (badges == null) {
