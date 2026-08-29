@@ -58,6 +58,9 @@ public final class ConfigManager {
         if (resourceName.equals("messages.yml")) {
             migrateMessageKeys(configuration);
         }
+        if (resourceName.equals("gui.yml")) {
+            migrateGuiKeys(configuration);
+        }
         try (InputStream inputStream = plugin.getResource(resourceName)) {
             if (inputStream == null) {
                 return configuration;
@@ -88,6 +91,17 @@ public final class ConfigManager {
     private void migrateMessageKeys(YamlConfiguration configuration) {
         migratePath(configuration, "messages.help-take", "messages.help-remove");
         migratePath(configuration, "messages.badge-taken", "messages.badge-remove-success");
+    }
+
+    private void migrateGuiKeys(YamlConfiguration configuration) {
+        int layoutVersion = configuration.getInt("menu.layout-version", 1);
+        if (layoutVersion >= 2) {
+            return;
+        }
+        if (configuration.getInt("clear-all.slot", 40) == 40) {
+            configuration.set("clear-all.slot", 49);
+        }
+        configuration.set("menu.layout-version", 2);
     }
 
     private void migratePath(YamlConfiguration configuration, String oldPath, String newPath) {

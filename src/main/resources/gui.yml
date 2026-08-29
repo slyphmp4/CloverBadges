@@ -1,6 +1,7 @@
 menu:
   title: "&8Значки"
   size: 54
+  layout-version: 2
   badge-slots:
     - 20
     - 21
@@ -36,7 +37,7 @@ empty-slot:
     - "&7"
 
 clear-all:
-  slot: 40
+  slot: 49
   material: "BARRIER"
   name: "&FF5555Отключить все значки"
   lore:
