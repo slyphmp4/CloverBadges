@@ -125,6 +125,19 @@ public final class ConfigManager {
         }
         if (layoutVersion < 4) {
             configuration.set("menu.layout-version", 4);
+            layoutVersion = 4;
+        }
+        if (layoutVersion < 5) {
+            if (configuration.getInt("menu.size", 54) == 54) {
+                configuration.set("menu.size", 45);
+            }
+            if (configuration.getInt("info-book.slot", 48) == 48) {
+                configuration.set("info-book.slot", 39);
+            }
+            if (configuration.getInt("clear-all.slot", 50) == 50) {
+                configuration.set("clear-all.slot", 41);
+            }
+            configuration.set("menu.layout-version", 5);
         }
     }
 
