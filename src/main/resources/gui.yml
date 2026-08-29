@@ -17,6 +17,56 @@ menu:
 nickname-colors:
   title: '&8'
   size: 54
+  color-slots:
+  - 20
+  - 22
+  - 24
+  - 29
+  - 31
+  - 33
+  clear:
+    slot: 49
+    material: GRAY_DYE
+    name: '&7'
+    lore:
+    - ' &B8B8B8✘ — Обычный никнейм '
+    - '&7'
+    - ' &878787⏏ Нажми, чтобы убрать покраску '
+    - '&7'
+
+nickname-color:
+  material: NAME_TAG
+  amount: 1
+  name: '&7'
+  lore-selected:
+  - ' {preview} &A6A6A6(выбрано) '
+  - '&7'
+  - ' &86E96E✔ Эта покраска сейчас используется '
+  - '&7'
+  lore-available:
+  - ' {preview} '
+  - '&7'
+  - ' &878787⏏ Нажми, чтобы выбрать покраску '
+  - '&7'
+  lore-locked:
+  - ' {preview} '
+  - '&7'
+  - ' &FF6B6B✘ Эта покраска тебе недоступна '
+  - '&7'
+
+nickname-color-items:
+  rose:
+    material: PINK_DYE
+  amber:
+    material: ORANGE_DYE
+  mint:
+    material: LIME_DYE
+  sky:
+    material: LIGHT_BLUE_DYE
+  violet:
+    material: PURPLE_DYE
+  coral:
+    material: RED_DYE
 
 page-switcher:
   slot: 4
