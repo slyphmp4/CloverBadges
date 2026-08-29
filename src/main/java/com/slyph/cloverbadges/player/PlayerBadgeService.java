@@ -40,7 +40,7 @@ public final class PlayerBadgeService implements BadgeApi {
         PlayerBadgeData playerData = data.computeIfAbsent(player.getUniqueId(), uuid -> {
             long firstPlayed = player.getFirstPlayed();
             long firstSeen = firstPlayed > 0L ? firstPlayed : System.currentTimeMillis();
-            return new PlayerBadgeData(uuid, firstSeen, null, false, Map.of(), Set.of());
+            return new PlayerBadgeData(uuid, firstSeen, Set.of(), false, Map.of(), Set.of());
         });
 
         if (playerData.firstSeen() <= 0L) {
@@ -51,19 +51,18 @@ public final class PlayerBadgeService implements BadgeApi {
         return playerData;
     }
 
-    public synchronized void grant(OfflinePlayer player, String badgeId, DurationParser.ParsedDuration duration) {
+    public synchronized boolean grant(OfflinePlayer player, String badgeId, DurationParser.ParsedDuration duration) {
         String id = badgeId.toLowerCase();
+        if (!hasBadge(player, id) && getOwnedBadgeIds(player).size() >= maxOwnedBadges()) {
+            return false;
+        }
+
         PlayerBadgeData playerData = ensure(player);
         long expiresAt = duration.permanent() ? 0L : System.currentTimeMillis() + duration.millis();
         playerData.grants().put(id, new BadgeGrant(expiresAt));
         playerData.suppressedAutomaticBadges().remove(id);
-
-        if (plugin.getConfig().getBoolean("selection.auto-select-first-granted-badge", true)
-                && playerData.selectedBadge() == null
-                && !playerData.selectionDisabled()) {
-            playerData.selectedBadge(id);
-        }
         saveIfConfigured();
+        return true;
     }
 
     public synchronized boolean revoke(OfflinePlayer player, String badgeId) {
@@ -75,14 +74,17 @@ public final class PlayerBadgeService implements BadgeApi {
         boolean hadBadge = hasBadge(player, id);
         PlayerBadgeData playerData = ensure(player);
         boolean changed = playerData.grants().remove(id) != null;
+        boolean hadManualSelection = !playerData.selectedBadges().isEmpty();
 
         if (id.equals(newcomerBadgeId()) && isNewcomerEligibleByTime(player)) {
             changed |= playerData.suppressedAutomaticBadges().add(id);
         }
 
-        if (id.equalsIgnoreCase(playerData.selectedBadge()) && !hasBadge(player, id)) {
-            playerData.selectedBadge(null);
+        if (playerData.selectedBadges().remove(id)) {
             changed = true;
+            if (hadManualSelection && playerData.selectedBadges().isEmpty()) {
+                playerData.selectionDisabled(true);
+            }
         }
 
         if (changed) {
@@ -96,23 +98,65 @@ public final class PlayerBadgeService implements BadgeApi {
         if (!hasBadge(player, id)) {
             return false;
         }
+
+        List<String> currentlyActive = new ArrayList<>(getActiveBadgeIds(player));
         PlayerBadgeData playerData = ensure(player);
-        playerData.selectedBadge(id);
+        playerData.selectedBadges().clear();
+        playerData.selectedBadges().add(id);
+        for (String activeId : currentlyActive) {
+            if (playerData.selectedBadges().size() >= maxVisibleBadges()) {
+                break;
+            }
+            playerData.selectedBadges().add(activeId);
+        }
         playerData.selectionDisabled(false);
         saveIfConfigured();
         return true;
     }
 
+    public synchronized BadgeToggleResult toggleDisplay(OfflinePlayer player, String badgeId) {
+        String id = badgeId.toLowerCase();
+        if (!hasBadge(player, id)) {
+            return BadgeToggleResult.NOT_OWNED;
+        }
+
+        PlayerBadgeData playerData = ensure(player);
+        List<String> active = new ArrayList<>(getActiveBadgeIds(player));
+        if (active.contains(id)) {
+            if (playerData.selectedBadges().isEmpty() && !playerData.selectionDisabled()) {
+                playerData.selectedBadges().addAll(active);
+            }
+            playerData.selectedBadges().remove(id);
+            playerData.selectionDisabled(playerData.selectedBadges().isEmpty());
+            saveIfConfigured();
+            return BadgeToggleResult.DISABLED;
+        }
+
+        if (active.size() >= maxVisibleBadges()) {
+            return BadgeToggleResult.LIMIT_REACHED;
+        }
+
+        if (playerData.selectionDisabled()) {
+            playerData.selectedBadges().clear();
+        } else if (playerData.selectedBadges().isEmpty()) {
+            playerData.selectedBadges().addAll(active);
+        }
+        playerData.selectedBadges().add(id);
+        playerData.selectionDisabled(false);
+        saveIfConfigured();
+        return BadgeToggleResult.ENABLED;
+    }
+
     public synchronized void clearSelection(OfflinePlayer player) {
         PlayerBadgeData playerData = ensure(player);
-        playerData.selectedBadge(null);
+        playerData.selectedBadges().clear();
         playerData.selectionDisabled(true);
         saveIfConfigured();
     }
 
     public synchronized void enableAutomaticSelection(OfflinePlayer player) {
         PlayerBadgeData playerData = ensure(player);
-        playerData.selectedBadge(null);
+        playerData.selectedBadges().clear();
         playerData.selectionDisabled(false);
         saveIfConfigured();
     }
@@ -125,7 +169,6 @@ public final class PlayerBadgeService implements BadgeApi {
         }
 
         List<String> owned = getOwnedBadgeIds(player).stream()
-                .filter(id -> isDisplayEnabledForSource(player, id))
                 .sorted(badgeComparator())
                 .toList();
         if (owned.isEmpty()) {
@@ -133,26 +176,18 @@ public final class PlayerBadgeService implements BadgeApi {
         }
 
         int maxBadges = maxVisibleBadges();
-        if (owned.size() <= maxBadges) {
-            return List.copyOf(owned);
+        if (!playerData.selectedBadges().isEmpty()) {
+            return playerData.selectedBadges().stream()
+                    .map(String::toLowerCase)
+                    .filter(owned::contains)
+                    .sorted(badgeComparator())
+                    .limit(maxBadges)
+                    .toList();
         }
 
-        String preferred = playerData.selectedBadge();
-        if (preferred == null || !owned.contains(preferred.toLowerCase())) {
-            return List.copyOf(owned.subList(0, maxBadges));
-        }
-
-        LinkedHashSet<String> selected = new LinkedHashSet<>();
-        selected.add(preferred.toLowerCase());
-        for (String id : owned) {
-            if (selected.size() >= maxBadges) {
-                break;
-            }
-            selected.add(id);
-        }
-
-        return selected.stream()
-                .sorted(badgeComparator())
+        return owned.stream()
+                .filter(id -> isAutomaticDisplayEnabledForSource(player, id))
+                .limit(maxBadges)
                 .toList();
     }
 
@@ -344,12 +379,20 @@ public final class PlayerBadgeService implements BadgeApi {
                 changed = true;
             }
 
-            String selected = playerData.selectedBadge();
-            if (selected != null
-                    && plugin.getConfig().getBoolean("selection.clear-invalid-selection", true)
-                    && !isOwnedWithoutEnsuring(playerData.uuid(), selected)) {
-                playerData.selectedBadge(null);
-                changed = true;
+            if (plugin.getConfig().getBoolean("selection.clear-invalid-selection", true) && !playerData.selectedBadges().isEmpty()) {
+                ArrayList<String> invalid = new ArrayList<>();
+                for (String selected : playerData.selectedBadges()) {
+                    if (!isOwnedWithoutEnsuring(playerData.uuid(), selected)) {
+                        invalid.add(selected);
+                    }
+                }
+                if (!invalid.isEmpty()) {
+                    playerData.selectedBadges().removeAll(invalid);
+                    if (playerData.selectedBadges().isEmpty()) {
+                        playerData.selectionDisabled(true);
+                    }
+                    changed = true;
+                }
             }
         }
 
@@ -383,7 +426,7 @@ public final class PlayerBadgeService implements BadgeApi {
                 && isNewcomerEligibleByTime(player);
     }
 
-    private boolean isDisplayEnabledForSource(OfflinePlayer player, String badgeId) {
+    private boolean isAutomaticDisplayEnabledForSource(OfflinePlayer player, String badgeId) {
         String id = badgeId.toLowerCase();
         if (!id.equals(newcomerBadgeId()) || plugin.getConfig().getBoolean("newcomer.auto-display", true)) {
             return true;
@@ -427,8 +470,12 @@ public final class PlayerBadgeService implements BadgeApi {
                 .thenComparing(String::compareTo);
     }
 
-    private int maxVisibleBadges() {
+    public int maxVisibleBadges() {
         return Math.max(1, Math.min(2, plugin.getConfig().getInt("display.max-badges", 2)));
+    }
+
+    public int maxOwnedBadges() {
+        return Math.max(1, Math.min(10, plugin.getConfig().getInt("limits.max-owned-badges", 10)));
     }
 
     public void saveAll() {
