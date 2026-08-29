@@ -95,13 +95,19 @@ public final class ConfigManager {
 
     private void migrateGuiKeys(YamlConfiguration configuration) {
         int layoutVersion = configuration.getInt("menu.layout-version", 1);
-        if (layoutVersion >= 2) {
-            return;
+        if (layoutVersion < 2) {
+            if (configuration.getInt("clear-all.slot", 40) == 40) {
+                configuration.set("clear-all.slot", 49);
+            }
+            configuration.set("menu.layout-version", 2);
+            layoutVersion = 2;
         }
-        if (configuration.getInt("clear-all.slot", 40) == 40) {
-            configuration.set("clear-all.slot", 49);
+        if (layoutVersion < 3) {
+            if (configuration.getInt("clear-all.slot", 49) == 49) {
+                configuration.set("clear-all.slot", 50);
+            }
+            configuration.set("menu.layout-version", 3);
         }
-        configuration.set("menu.layout-version", 2);
     }
 
     private void migratePath(YamlConfiguration configuration, String oldPath, String newPath) {
