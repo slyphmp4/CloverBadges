@@ -15,15 +15,18 @@ public final class ConfigManager {
     private final File badgesFile;
     private final File messagesFile;
     private final File guiFile;
+    private final File nicknameColorsFile;
     private volatile YamlConfiguration badges;
     private volatile YamlConfiguration messages;
     private volatile YamlConfiguration gui;
+    private volatile YamlConfiguration nicknameColors;
 
     public ConfigManager(CloverBadges plugin) {
         this.plugin = plugin;
         this.badgesFile = new File(plugin.getDataFolder(), "badges.yml");
         this.messagesFile = new File(plugin.getDataFolder(), "messages.yml");
         this.guiFile = new File(plugin.getDataFolder(), "gui.yml");
+        this.nicknameColorsFile = new File(plugin.getDataFolder(), "nickname-colors.yml");
         ensureFiles();
         reload();
     }
@@ -39,6 +42,9 @@ public final class ConfigManager {
         if (!guiFile.exists()) {
             plugin.saveResource("gui.yml", false);
         }
+        if (!nicknameColorsFile.exists()) {
+            plugin.saveResource("nickname-colors.yml", false);
+        }
     }
 
     public void reload() {
@@ -48,6 +54,7 @@ public final class ConfigManager {
 
         badges = loadWithDefaults(badgesFile, "badges.yml");
         messages = loadWithDefaults(messagesFile, "messages.yml");
+        nicknameColors = loadWithDefaults(nicknameColorsFile, "nickname-colors.yml");
 
         gui = YamlConfiguration.loadConfiguration(guiFile);
         migrateGuiKeys(gui);
@@ -216,5 +223,9 @@ public final class ConfigManager {
 
     public YamlConfiguration gui() {
         return gui;
+    }
+
+    public YamlConfiguration nicknameColors() {
+        return nicknameColors;
     }
 }
