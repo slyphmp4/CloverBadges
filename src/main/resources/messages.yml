@@ -2,6 +2,8 @@ messages:
   help-header:
     - "&7"
     - "&FFD166CloverBadges &8• &FFFFFFКоманды"
+  help-menu:
+    - "&FFFFFF/badge &8— &B8B8B8открыть меню значков"
   help-list:
     - "&FFFFFF/badge list &8— &B8B8B8твои бейджи"
   help-select:
@@ -48,7 +50,7 @@ messages:
     - "&7"
   badge-selected:
     - "&7"
-    - "&55FF88Бейдж {badge} &55FF88закреплён в отображении."
+    - "&55FF88Бейдж {badge} &55FF88включён в отображение."
     - "&7"
   badge-auto:
     - "&7"
@@ -76,7 +78,7 @@ messages:
     - "&7"
   badge-set-other:
     - "&7"
-    - "&55FF88Игроку &FFFFFF{player} &55FF88закреплён в отображении бейдж {badge}&55FF88."
+    - "&55FF88Игроку &FFFFFF{player} &55FF88включён в отображение бейдж {badge}&55FF88."
     - "&7"
   badge-set-auto-other:
     - "&7"
@@ -89,6 +91,14 @@ messages:
   invalid-duration:
     - "&7"
     - "&FF5555Неверное время. Примеры: &FFFFFF30m&FF5555, &FFFFFF12h&FF5555, &FFFFFF7d&FF5555, &FFFFFF2w&FF5555, &FFFFFFpermanent&FF5555."
+    - "&7"
+  badge-limit-owned:
+    - "&7"
+    - "&FF5555У игрока &FFFFFF{player} &FF5555уже собрано максимум значков: &FFFFFF{max}&FF5555."
+    - "&7"
+  gui-max-active:
+    - "&7"
+    - "&FFAA55Одновременно рядом с ником можно отображать максимум &FFFFFF{max} &FFAA55значка."
     - "&7"
   reload:
     - "&7"
