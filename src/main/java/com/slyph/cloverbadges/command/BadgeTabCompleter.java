@@ -42,7 +42,16 @@ public final class BadgeTabCompleter implements TabCompleter {
                 return filter(onlineNames(), args[1]);
             }
             if (args.length == 3) {
-                return filter(service.allBadgeIds(), args[2]);
+                Player target = Bukkit.getPlayerExact(args[1]);
+                if (target == null) {
+                    return List.of();
+                }
+                if (sub.equals("give")) {
+                    return filter(service.allBadgeIds().stream()
+                            .filter(id -> !service.hasBadge(target, id))
+                            .toList(), args[2]);
+                }
+                return filter(service.getOwnedBadgeIds(target), args[2]);
             }
         }
 
