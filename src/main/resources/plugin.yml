@@ -18,35 +18,20 @@ permissions:
     children:
       cloverbadges.use: true
       cloverbadges.menu: true
-      cloverbadges.list: true
-      cloverbadges.select: true
-      cloverbadges.info: true
       cloverbadges.admin.*: true
   cloverbadges.admin.*:
     default: op
     children:
-      cloverbadges.admin.info: true
       cloverbadges.admin.give: true
       cloverbadges.admin.remove: true
-      cloverbadges.admin.set: true
       cloverbadges.admin.reload: true
   cloverbadges.use:
     default: true
   cloverbadges.menu:
     default: true
-  cloverbadges.list:
-    default: true
-  cloverbadges.select:
-    default: true
-  cloverbadges.info:
-    default: true
-  cloverbadges.admin.info:
-    default: op
   cloverbadges.admin.give:
     default: op
   cloverbadges.admin.remove:
-    default: op
-  cloverbadges.admin.set:
     default: op
   cloverbadges.admin.reload:
     default: op
