@@ -5,6 +5,8 @@ import com.slyph.cloverbadges.badge.BadgeRegistry;
 import com.slyph.cloverbadges.command.BadgeCommand;
 import com.slyph.cloverbadges.command.BadgeTabCompleter;
 import com.slyph.cloverbadges.config.ConfigManager;
+import com.slyph.cloverbadges.gui.BadgeMenuListener;
+import com.slyph.cloverbadges.gui.BadgeMenuManager;
 import com.slyph.cloverbadges.listener.PlayerListener;
 import com.slyph.cloverbadges.message.MessageService;
 import com.slyph.cloverbadges.placeholder.CloverBadgesExpansion;
@@ -32,12 +34,14 @@ public final class CloverBadges extends JavaPlugin {
         messageService = new MessageService(configManager);
         PlayerDataStore dataStore = new PlayerDataStore(this);
         badgeService = new PlayerBadgeService(this, badgeRegistry, dataStore);
+        BadgeMenuManager menuManager = new BadgeMenuManager(configManager, badgeService, messageService);
 
         PluginCommand badgeCommand = Objects.requireNonNull(getCommand("badge"));
-        badgeCommand.setExecutor(new BadgeCommand(this, badgeService, messageService));
+        badgeCommand.setExecutor(new BadgeCommand(this, badgeService, messageService, menuManager));
         badgeCommand.setTabCompleter(new BadgeTabCompleter(badgeService));
 
         getServer().getPluginManager().registerEvents(new PlayerListener(badgeService), this);
+        getServer().getPluginManager().registerEvents(new BadgeMenuListener(menuManager), this);
         getServer().getServicesManager().register(BadgeApi.class, badgeService, this, ServicePriority.Normal);
 
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
