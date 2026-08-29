@@ -2,20 +2,10 @@ messages:
   help-header:
     - "&7"
     - "&FFD166CloverBadges &8• &FFFFFFКоманды"
-  help-list:
-    - "&FFFFFF/badge list &8— &B8B8B8твои бейджи"
-  help-select:
-    - "&FFFFFF/badge select <id|auto|none> &8— &B8B8B8настроить отображение бейджей"
-  help-info:
-    - "&FFFFFF/badge info &8— &B8B8B8информация о себе"
-  help-admin-info:
-    - "&FFFFFF/badge info <игрок> &8— &B8B8B8информация об игроке"
   help-give:
     - "&FFFFFF/badge give <игрок> <id> [время|permanent]"
   help-remove:
     - "&FFFFFF/badge remove <игрок> <id>"
-  help-set:
-    - "&FFFFFF/badge set <игрок> <id|auto|none>"
   help-reload:
     - "&FFFFFF/badge reload"
   help-footer:
@@ -23,10 +13,6 @@ messages:
   no-permission:
     - "&7"
     - "&FF5555У тебя нет прав на эту команду."
-    - "&7"
-  player-only:
-    - "&7"
-    - "&FF5555Эта команда доступна только игроку."
     - "&7"
   player-not-found:
     - "&7"
@@ -36,25 +22,9 @@ messages:
     - "&7"
     - "&FF5555Бейдж &FFFFFF{badge} &FF5555не найден."
     - "&7"
-  badge-not-owned:
-    - "&7"
-    - "&FF5555У тебя нет бейджа &FFFFFF{badge}&FF5555."
-    - "&7"
   target-badge-not-owned:
     - "&7"
     - "&FF5555У игрока &FFFFFF{player} &FF5555нет бейджа &FFFFFF{badge}&FF5555."
-    - "&7"
-  badge-selected:
-    - "&7"
-    - "&55FF88Бейдж {badge} &55FF88включён в отображение."
-    - "&7"
-  badge-auto:
-    - "&7"
-    - "&55FF88Автоматический выбор двух самых приоритетных бейджей включён."
-    - "&7"
-  badge-cleared:
-    - "&7"
-    - "&55FF88Отображение бейджей отключено."
     - "&7"
   badge-given:
     - "&7"
@@ -72,18 +42,6 @@ messages:
     - "&7"
     - "&FFAA55У тебя забрали бейдж {badge}&FFAA55."
     - "&7"
-  badge-set-other:
-    - "&7"
-    - "&55FF88Игроку &FFFFFF{player} &55FF88включён в отображение бейдж {badge}&55FF88."
-    - "&7"
-  badge-set-auto-other:
-    - "&7"
-    - "&55FF88Игроку &FFFFFF{player} &55FF88включён автоматический выбор бейджей по приоритету."
-    - "&7"
-  badge-set-none-other:
-    - "&7"
-    - "&55FF88Игроку &FFFFFF{player} &55FF88отключено отображение бейджей."
-    - "&7"
   invalid-duration:
     - "&7"
     - "&FF5555Неверное время. Примеры: &FFFFFF30m&FF5555, &FFFFFF12h&FF5555, &FFFFFF7d&FF5555, &FFFFFF2w&FF5555, &FFFFFFpermanent&FF5555."
@@ -99,23 +57,4 @@ messages:
   reload:
     - "&7"
     - "&55FF88CloverBadges перезагружен."
-    - "&7"
-  list-header:
-    - "&7"
-    - "&FFD166Твои бейджи:"
-  list-entry:
-    - "&FFFFFF{id} &8• {name} &8• &B8B8B8{remaining} &8• &B8B8B8приоритет {priority}{selected}"
-  list-empty:
-    - "&B8B8B8У тебя пока нет доступных бейджей."
-  list-footer:
-    - "&7"
-  selected-mark:
-    - " &55FF88[отображается]"
-  info:
-    - "&7"
-    - "&FFD166Бейджи игрока &FFFFFF{player}"
-    - "&B8B8B8Отображаются: {active}"
-    - "&B8B8B8Количество: &FFFFFF{active_count}&B8B8B8/2"
-    - "&B8B8B8Новичок: &FFFFFF{newcomer}"
-    - "&B8B8B8Осталось новичка: &FFFFFF{newcomer_remaining}"
     - "&7"
