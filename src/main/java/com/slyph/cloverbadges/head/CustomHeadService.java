@@ -1,5 +1,6 @@
 package com.slyph.cloverbadges.head;
 
+import com.destroystokyo.paper.profile.ProfileProperty;
 import com.slyph.cloverbadges.CloverBadges;
 import com.slyph.cloverbadges.config.ConfigManager;
 import org.bukkit.Bukkit;
@@ -43,8 +44,8 @@ public final class CustomHeadService {
     private final CloverBadges plugin;
     private final ConfigManager configManager;
     private final ExecutorService executor;
-    private final Map<String, String> resolvedUrls = new ConcurrentHashMap<>();
-    private final Set<String> warnedTextureUrls = ConcurrentHashMap.newKeySet();
+    private final Map<String, TextureData> resolvedTextures = new ConcurrentHashMap<>();
+    private final Set<String> warnedTextures = ConcurrentHashMap.newKeySet();
     private final AtomicLong generation = new AtomicLong();
 
     public CustomHeadService(CloverBadges plugin, ConfigManager configManager) {
@@ -64,7 +65,7 @@ public final class CustomHeadService {
         for (String name : configuredNames) {
             normalizedNames.add(normalizeName(name));
         }
-        resolvedUrls.keySet().retainAll(normalizedNames);
+        resolvedTextures.keySet().retainAll(normalizedNames);
 
         if (configuredNames.isEmpty()) {
             return;
@@ -98,39 +99,69 @@ public final class CustomHeadService {
             return;
         }
 
-        Optional<String> apiUrl = resolveTextureUrl(minecraftHeadsName);
-        Optional<String> fallbackUrl = textureUrlFromValue(fallbackValue);
-        String textureUrl = apiUrl.orElseGet(() -> fallbackUrl.orElse(null));
-        if (textureUrl == null) {
+        Optional<TextureData> apiTexture = resolveTexture(minecraftHeadsName);
+        Optional<TextureData> fallbackTexture = textureFromValue(fallbackValue);
+        TextureData texture = apiTexture.orElseGet(() -> fallbackTexture.orElse(null));
+        if (texture == null) {
             return;
         }
 
-        try {
-            UUID profileId = UUID.nameUUIDFromBytes(("CloverBadges:" + textureUrl).getBytes(StandardCharsets.UTF_8));
-            PlayerProfile profile = Bukkit.createPlayerProfile(profileId);
-            PlayerTextures textures = profile.getTextures();
-            textures.setSkin(URI.create(textureUrl).toURL());
-            profile.setTextures(textures);
-            skullMeta.setOwnerProfile(profile);
-        } catch (Exception exception) {
-            if (warnedTextureUrls.add(textureUrl)) {
-                plugin.getLogger().warning("Failed to apply custom head texture: " + exception.getMessage());
-            }
+        if (applyRawTexture(skullMeta, texture)) {
+            return;
         }
+        applyUrlTexture(skullMeta, texture);
     }
 
     public Optional<String> resolveTextureUrl(String minecraftHeadsName) {
+        return resolveTexture(minecraftHeadsName).map(TextureData::url);
+    }
+
+    private Optional<TextureData> resolveTexture(String minecraftHeadsName) {
         if (minecraftHeadsName == null || minecraftHeadsName.isBlank()) {
             return Optional.empty();
         }
-        return Optional.ofNullable(resolvedUrls.get(normalizeName(minecraftHeadsName)));
+        return Optional.ofNullable(resolvedTextures.get(normalizeName(minecraftHeadsName)));
+    }
+
+    private boolean applyRawTexture(SkullMeta skullMeta, TextureData texture) {
+        try {
+            UUID profileId = UUID.nameUUIDFromBytes(("CloverBadges:" + texture.url()).getBytes(StandardCharsets.UTF_8));
+            PlayerProfile profile = Bukkit.createPlayerProfile(profileId);
+            if (!(profile instanceof com.destroystokyo.paper.profile.PlayerProfile paperProfile)) {
+                return false;
+            }
+            paperProfile.setProperty(new ProfileProperty("textures", texture.value()));
+            skullMeta.setPlayerProfile(paperProfile);
+            return true;
+        } catch (Throwable throwable) {
+            return false;
+        }
+    }
+
+    private void applyUrlTexture(SkullMeta skullMeta, TextureData texture) {
+        try {
+            UUID profileId = UUID.nameUUIDFromBytes(("CloverBadges:" + texture.url()).getBytes(StandardCharsets.UTF_8));
+            PlayerProfile profile = Bukkit.createPlayerProfile(profileId);
+            PlayerTextures textures = profile.getTextures();
+            textures.setSkin(URI.create(texture.url()).toURL());
+            profile.setTextures(textures);
+            if (profile instanceof com.destroystokyo.paper.profile.PlayerProfile paperProfile) {
+                skullMeta.setPlayerProfile(paperProfile);
+            } else {
+                skullMeta.setOwnerProfile(profile);
+            }
+        } catch (Exception exception) {
+            if (warnedTextures.add(texture.url())) {
+                plugin.getLogger().warning("Failed to apply custom head texture: " + exception.getMessage());
+            }
+        }
     }
 
     private void sync(long syncGeneration, Set<String> configuredNames, ApiSettings settings) {
         LinkedHashMap<String, String> pending = new LinkedHashMap<>();
         for (String name : configuredNames) {
             String normalized = normalizeName(name);
-            if (!resolvedUrls.containsKey(normalized)) {
+            if (!resolvedTextures.containsKey(normalized)) {
                 pending.put(normalized, name);
             }
         }
@@ -215,12 +246,12 @@ public final class CustomHeadService {
                 if (!pending.containsKey(normalized)) {
                     continue;
                 }
-                Optional<String> textureUrl = textureUrlFromEntry(entry);
-                if (textureUrl.isEmpty()) {
+                Optional<TextureData> texture = textureFromEntry(entry);
+                if (texture.isEmpty()) {
                     continue;
                 }
                 if (syncGeneration == generation.get()) {
-                    resolvedUrls.putIfAbsent(normalized, textureUrl.get());
+                    resolvedTextures.putIfAbsent(normalized, texture.get());
                     pending.remove(normalized);
                 }
             }
@@ -286,23 +317,23 @@ public final class CustomHeadService {
         }
     }
 
-    private Optional<String> textureUrlFromEntry(Map<?, ?> entry) {
+    private Optional<TextureData> textureFromEntry(Map<?, ?> entry) {
         String value = firstString(entry, "v", "value");
-        Optional<String> fromValue = textureUrlFromValue(value);
+        Optional<TextureData> fromValue = textureFromValue(value);
         if (fromValue.isPresent()) {
             return fromValue;
         }
 
         String url = firstString(entry, "u", "url");
-        return normalizeTextureUrl(url);
+        return textureFromUrl(url);
     }
 
-    private Optional<String> textureUrlFromValue(String value) {
+    private Optional<TextureData> textureFromValue(String value) {
         if (value == null || value.isBlank()) {
             return Optional.empty();
         }
 
-        Optional<String> direct = normalizeTextureUrl(value.trim());
+        Optional<TextureData> direct = textureFromUrl(value.trim());
         if (direct.isPresent()) {
             return direct;
         }
@@ -324,7 +355,23 @@ public final class CustomHeadService {
         if (!matcher.find()) {
             return Optional.empty();
         }
-        return normalizeTextureUrl(matcher.group(1));
+
+        Optional<String> normalizedUrl = normalizeTextureUrl(matcher.group(1));
+        if (normalizedUrl.isEmpty()) {
+            return Optional.empty();
+        }
+        String normalizedValue = Base64.getEncoder().encodeToString(decoded);
+        return Optional.of(new TextureData(normalizedUrl.get(), normalizedValue));
+    }
+
+    private Optional<TextureData> textureFromUrl(String value) {
+        Optional<String> normalizedUrl = normalizeTextureUrl(value);
+        if (normalizedUrl.isEmpty()) {
+            return Optional.empty();
+        }
+        String json = "{\"textures\":{\"SKIN\":{\"url\":\"" + normalizedUrl.get() + "\"}}}";
+        String encoded = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+        return Optional.of(new TextureData(normalizedUrl.get(), encoded));
     }
 
     private Optional<String> normalizeTextureUrl(String value) {
@@ -369,6 +416,9 @@ public final class CustomHeadService {
 
     private String encode(String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    private record TextureData(String url, String value) {
     }
 
     private record ApiSettings(String appUuid, String apiKey, boolean demo, int connectTimeoutMs, int readTimeoutMs) {
