@@ -13,8 +13,10 @@ import org.bukkit.profile.PlayerTextures;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -152,14 +154,27 @@ public final class CustomHeadService {
     }
 
     private Throwable applyCardboardTexture(SkullMeta skullMeta, TextureData texture) {
+        String stage = "runtime classes";
         try {
-            UUID profileId = profileId(texture);
-            org.bukkit.profile.PlayerProfile profile = Bukkit.createPlayerProfile(profileId, PROFILE_NAME);
-            PlayerTextures textures = profile.getTextures();
-            textures.setSkin(URI.create(texture.url()).toURL());
-            profile.setTextures(textures);
+            ClassLoader loader = skullMeta.getClass().getClassLoader();
+            Class<?> gameProfileClass = runtimeClass("com.mojang.authlib.GameProfile", loader);
+            Class<?> propertyClass = runtimeClass("com.mojang.authlib.properties.Property", loader);
+            Class<?> propertyMapClass = runtimeClass("com.mojang.authlib.properties.PropertyMap", loader);
+            Class<?> resolvableProfileClass = runtimeClass("net.minecraft.world.item.component.ResolvableProfile", loader);
 
-            Object resolvableProfile = profile.getClass().getMethod("buildResolvableProfile").invoke(profile);
+            stage = "textures property";
+            Object propertyMap = propertyMapClass.getConstructor().newInstance();
+            Object property = propertyClass.getConstructor(String.class, String.class).newInstance("textures", texture.value());
+            putProperty(propertyMap, property);
+
+            stage = "GameProfile";
+            Object gameProfile = createGameProfile(gameProfileClass, propertyMapClass, profileId(texture), propertyMap, property);
+
+            stage = "ResolvableProfile";
+            Method createResolved = resolvableProfileClass.getMethod("createResolved", gameProfileClass);
+            Object resolvableProfile = createResolved.invoke(null, gameProfile);
+
+            stage = "CraftMetaSkull.profile";
             Field profileField = findField(skullMeta.getClass(), "profile");
             if (profileField == null) {
                 return new IllegalStateException("CraftMetaSkull.profile field not found");
@@ -168,8 +183,52 @@ public final class CustomHeadService {
             profileField.set(skullMeta, resolvableProfile);
             return null;
         } catch (Throwable throwable) {
-            return unwrap(throwable);
+            Throwable cause = unwrap(throwable);
+            String message = cause.getMessage();
+            String detail = stage + " -> " + cause.getClass().getSimpleName();
+            if (message != null && !message.isBlank()) {
+                detail += ": " + message;
+            }
+            return new IllegalStateException(detail, cause);
         }
+    }
+
+    private Object createGameProfile(Class<?> gameProfileClass, Class<?> propertyMapClass, UUID profileId, Object propertyMap, Object property) throws ReflectiveOperationException {
+        try {
+            Constructor<?> constructor = gameProfileClass.getConstructor(UUID.class, String.class, propertyMapClass);
+            return constructor.newInstance(profileId, PROFILE_NAME, propertyMap);
+        } catch (NoSuchMethodException ignored) {
+            Constructor<?> constructor = gameProfileClass.getConstructor(UUID.class, String.class);
+            Object gameProfile = constructor.newInstance(profileId, PROFILE_NAME);
+            Object gameProfileProperties = gameProfileClass.getMethod("properties").invoke(gameProfile);
+            putProperty(gameProfileProperties, property);
+            return gameProfile;
+        }
+    }
+
+    private void putProperty(Object propertyMap, Object property) throws ReflectiveOperationException {
+        Method putMethod = null;
+        for (Method method : propertyMap.getClass().getMethods()) {
+            if (!method.getName().equals("put") || method.getParameterCount() != 2) {
+                continue;
+            }
+            putMethod = method;
+            break;
+        }
+        if (putMethod == null) {
+            throw new NoSuchMethodException(propertyMap.getClass().getName() + ".put");
+        }
+        putMethod.invoke(propertyMap, "textures", property);
+    }
+
+    private Class<?> runtimeClass(String name, ClassLoader loader) throws ClassNotFoundException {
+        if (loader != null) {
+            try {
+                return Class.forName(name, true, loader);
+            } catch (ClassNotFoundException ignored) {
+            }
+        }
+        return Class.forName(name);
     }
 
     private Throwable applyPaperTexture(SkullMeta skullMeta, TextureData texture) {
