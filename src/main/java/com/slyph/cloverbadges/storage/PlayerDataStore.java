@@ -11,21 +11,23 @@ import java.io.IOException;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 public final class PlayerDataStore {
-    private final CloverBadges plugin;
     private final File file;
+    private final AsyncYamlWriter<Snapshot> writer;
 
     public PlayerDataStore(CloverBadges plugin) {
-        this.plugin = plugin;
         this.file = new File(plugin.getDataFolder(), "players.yml");
+        this.writer = new AsyncYamlWriter<>(plugin, "CloverBadges-PlayerData", file.getName(), this::write);
     }
 
     public Map<UUID, PlayerBadgeData> loadAll() {
@@ -92,29 +94,65 @@ public final class PlayerDataStore {
         return result;
     }
 
-    public synchronized void saveAll(Collection<PlayerBadgeData> data) {
-        YamlConfiguration yaml = new YamlConfiguration();
+    public Snapshot snapshot(Collection<PlayerBadgeData> data) {
+        List<PlayerSnapshot> players = new ArrayList<>(data.size());
         for (PlayerBadgeData playerData : data) {
-            String path = "players." + playerData.uuid();
-            yaml.set(path + ".first-seen", playerData.firstSeen());
-            yaml.set(path + ".selected-badges", playerData.selectedBadges().stream().sorted().toList());
-            yaml.set(path + ".selection-disabled", playerData.selectionDisabled());
-            yaml.set(path + ".suppressed-automatic-badges", playerData.suppressedAutomaticBadges().stream().sorted().toList());
+            Map<String, Long> grants = new LinkedHashMap<>();
             for (Map.Entry<String, BadgeGrant> entry : playerData.grants().entrySet()) {
-                yaml.set(path + ".grants." + entry.getKey() + ".expires-at", entry.getValue().expiresAt());
+                grants.put(entry.getKey(), entry.getValue().expiresAt());
+            }
+            players.add(new PlayerSnapshot(
+                    playerData.uuid(),
+                    playerData.firstSeen(),
+                    List.copyOf(playerData.selectedBadges().stream().sorted().toList()),
+                    playerData.selectionDisabled(),
+                    List.copyOf(playerData.suppressedAutomaticBadges().stream().sorted().toList()),
+                    Map.copyOf(grants)
+            ));
+        }
+        return new Snapshot(List.copyOf(players));
+    }
+
+    public void saveAsync(Snapshot snapshot) {
+        writer.submit(snapshot);
+    }
+
+    public void flushAndClose(Snapshot snapshot) {
+        writer.close(snapshot);
+    }
+
+    private void write(Snapshot snapshot) throws IOException {
+        YamlConfiguration yaml = new YamlConfiguration();
+        for (PlayerSnapshot player : snapshot.players()) {
+            String path = "players." + player.uuid();
+            yaml.set(path + ".first-seen", player.firstSeen());
+            yaml.set(path + ".selected-badges", player.selectedBadges());
+            yaml.set(path + ".selection-disabled", player.selectionDisabled());
+            yaml.set(path + ".suppressed-automatic-badges", player.suppressedAutomaticBadges());
+            for (Map.Entry<String, Long> entry : player.grants().entrySet()) {
+                yaml.set(path + ".grants." + entry.getKey() + ".expires-at", entry.getValue());
             }
         }
 
         File temporary = new File(file.getParentFile(), file.getName() + ".tmp");
+        yaml.save(temporary);
         try {
-            yaml.save(temporary);
-            try {
-                Files.move(temporary.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-            } catch (AtomicMoveNotSupportedException exception) {
-                Files.move(temporary.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            }
-        } catch (IOException exception) {
-            plugin.getLogger().severe("Не удалось сохранить players.yml: " + exception.getMessage());
+            Files.move(temporary.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException exception) {
+            Files.move(temporary.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
+    }
+
+    public record Snapshot(List<PlayerSnapshot> players) {
+    }
+
+    public record PlayerSnapshot(
+            UUID uuid,
+            long firstSeen,
+            List<String> selectedBadges,
+            boolean selectionDisabled,
+            List<String> suppressedAutomaticBadges,
+            Map<String, Long> grants
+    ) {
     }
 }
