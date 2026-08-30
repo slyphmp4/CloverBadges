@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public final class ConfigManager {
     private final CloverBadges plugin;
@@ -165,6 +166,30 @@ public final class ConfigManager {
         }
         if (layoutVersion < 7) {
             configuration.set("menu.layout-version", 7);
+            layoutVersion = 7;
+        }
+        if (layoutVersion < 8) {
+            List<Integer> oldSlots = List.of(20, 22, 24, 29, 31, 33);
+            if (configuration.getIntegerList("nickname-colors.color-slots").equals(oldSlots)) {
+                configuration.set("nickname-colors.color-slots", List.of(20, 21, 22, 23, 24, 29, 30, 31, 32, 33));
+            }
+            if (configuration.getString("nickname-color.material", "NAME_TAG").equalsIgnoreCase("NAME_TAG")) {
+                configuration.set("nickname-color.material", "PLAYER_HEAD");
+            }
+            migrateNicknameColorMaterial(configuration, "rose", "PINK_DYE");
+            migrateNicknameColorMaterial(configuration, "amber", "ORANGE_DYE");
+            migrateNicknameColorMaterial(configuration, "mint", "LIME_DYE");
+            migrateNicknameColorMaterial(configuration, "sky", "LIGHT_BLUE_DYE");
+            migrateNicknameColorMaterial(configuration, "violet", "PURPLE_DYE");
+            migrateNicknameColorMaterial(configuration, "coral", "RED_DYE");
+            configuration.set("menu.layout-version", 8);
+        }
+    }
+
+    private void migrateNicknameColorMaterial(YamlConfiguration configuration, String id, String oldMaterial) {
+        String path = "nickname-color-items." + id + ".material";
+        if (configuration.getString(path, oldMaterial).equalsIgnoreCase(oldMaterial)) {
+            configuration.set(path, "PLAYER_HEAD");
         }
     }
 
