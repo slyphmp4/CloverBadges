@@ -32,6 +32,20 @@ public final class ColorUtil {
         return SECTION.serialize(component(text));
     }
 
+    public static String legacyAmpersand(Component component) {
+        return AMPERSAND.serialize(component == null ? Component.empty() : component);
+    }
+
+    public static String toAmpersand(String text) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+        if (text.indexOf('§') < 0) {
+            return text;
+        }
+        return legacyAmpersand(SECTION.deserialize(text));
+    }
+
     public static String plain(String text) {
         return PLAIN.serialize(component(text));
     }
