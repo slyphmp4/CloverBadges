@@ -10,8 +10,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Set;
 
 public final class ConfigManager {
+    private static final Set<String> LEGACY_DEFAULT_PAINTS = Set.of("rose", "amber", "mint", "sky", "violet", "coral");
     private final CloverBadges plugin;
     private final File badgesFile;
     private final File messagesFile;
@@ -79,6 +81,9 @@ public final class ConfigManager {
         if (resourceName.equals("messages.yml")) {
             migrateMessageKeys(configuration);
         }
+        if (resourceName.equals("nickname-colors.yml")) {
+            migrateNicknameColorKeys(configuration);
+        }
         return applyDefaults(configuration, file, resourceName);
     }
 
@@ -111,6 +116,19 @@ public final class ConfigManager {
     private void migrateMessageKeys(YamlConfiguration configuration) {
         migratePath(configuration, "messages.help-take", "messages.help-remove");
         migratePath(configuration, "messages.badge-taken", "messages.badge-remove-success");
+    }
+
+    private void migrateNicknameColorKeys(YamlConfiguration configuration) {
+        int version = configuration.getInt("config-version", 1);
+        if (version >= 2) {
+            return;
+        }
+        ConfigurationSection colors = configuration.getConfigurationSection("colors");
+        if (colors != null && colors.getKeys(false).equals(LEGACY_DEFAULT_PAINTS)) {
+            configuration.set("colors", null);
+            configuration.set("starter.color-id", "spicy_apple");
+        }
+        configuration.set("config-version", 2);
     }
 
     private void migrateGuiKeys(YamlConfiguration configuration) {
@@ -195,6 +213,21 @@ public final class ConfigManager {
                 ));
             }
             configuration.set("menu.layout-version", 9);
+            layoutVersion = 9;
+        }
+        if (layoutVersion < 10) {
+            for (String legacyId : LEGACY_DEFAULT_PAINTS) {
+                if (!nicknameColors.contains("colors." + legacyId)) {
+                    configuration.set("nickname-color-items." + legacyId, null);
+                }
+            }
+            if (!configuration.contains("nickname-colors.pagination.previous.slot")) {
+                configuration.set("nickname-colors.pagination.previous.slot", 47);
+            }
+            if (!configuration.contains("nickname-colors.pagination.next.slot")) {
+                configuration.set("nickname-colors.pagination.next.slot", 51);
+            }
+            configuration.set("menu.layout-version", 10);
         }
     }
 
