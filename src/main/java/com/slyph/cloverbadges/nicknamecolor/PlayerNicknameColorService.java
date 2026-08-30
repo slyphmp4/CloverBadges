@@ -1,6 +1,7 @@
 package com.slyph.cloverbadges.nicknamecolor;
 
 import com.slyph.cloverbadges.CloverBadges;
+import com.slyph.cloverbadges.nicknamecolor.render.NicknameGradientRenderer;
 import com.slyph.cloverbadges.nicknamecolor.storage.NicknameColorStore;
 import com.slyph.cloverbadges.util.ColorUtil;
 import com.slyph.cloverbadges.util.DurationParser;
@@ -213,7 +214,7 @@ public final class PlayerNicknameColorService {
     }
 
     public String preview(Player player, NicknameColorDefinition definition) {
-        return definition.format().replace("{player}", player.getName());
+        return renderNickname(player.getName(), definition);
     }
 
     public String coloredNicknameLegacy(OfflinePlayer player) {
@@ -229,8 +230,7 @@ public final class PlayerNicknameColorService {
         if (definition == null) {
             return playerName;
         }
-        String rendered = definition.format().replace("{player}", playerName);
-        return ColorUtil.legacySection(rendered + "&r");
+        return ColorUtil.legacySection(renderNickname(playerName, definition) + "&r");
     }
 
     public synchronized String formatRemaining(OfflinePlayer player, String colorId) {
@@ -266,6 +266,13 @@ public final class PlayerNicknameColorService {
             snapshot.put(entry.getKey(), new HashMap<>(entry.getValue()));
         }
         store.saveAll(new HashMap<>(selectedColors), snapshot, new HashSet<>(starterInitialized));
+    }
+
+    private String renderNickname(String playerName, NicknameColorDefinition definition) {
+        if (definition.hasGradient()) {
+            return NicknameGradientRenderer.render(playerName, definition.gradient());
+        }
+        return definition.format().replace("{player}", playerName);
     }
 
     private void cleanupInvalidData() {

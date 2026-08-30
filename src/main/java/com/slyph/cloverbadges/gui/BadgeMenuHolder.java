@@ -14,6 +14,7 @@ public final class BadgeMenuHolder implements InventoryHolder {
     private final Map<Integer, String> badgeSlots = new HashMap<>();
     private final Map<Integer, String> nicknameColorSlots = new HashMap<>();
     private Inventory inventory;
+    private int nicknameColorPage;
 
     public BadgeMenuHolder(UUID playerId, MenuPage page) {
         this.playerId = playerId;
@@ -26,6 +27,14 @@ public final class BadgeMenuHolder implements InventoryHolder {
 
     public MenuPage page() {
         return page;
+    }
+
+    public int nicknameColorPage() {
+        return nicknameColorPage;
+    }
+
+    public void nicknameColorPage(int nicknameColorPage) {
+        this.nicknameColorPage = Math.max(0, nicknameColorPage);
     }
 
     public void inventory(Inventory inventory) {

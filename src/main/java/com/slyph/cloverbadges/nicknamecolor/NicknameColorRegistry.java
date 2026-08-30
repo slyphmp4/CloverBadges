@@ -32,13 +32,14 @@ public final class NicknameColorRegistry {
             String id = rawId.toLowerCase(Locale.ROOT);
             String base = "colors." + rawId + ".";
             String format = configManager.nicknameColors().getString(base + "format", "");
-            if (format == null || format.isBlank()) {
+            List<String> gradient = configManager.nicknameColors().getStringList(base + "gradient");
+            if ((format == null || format.isBlank()) && gradient.size() < 2) {
                 continue;
             }
             String name = configManager.nicknameColors().getString(base + "name", id);
             String permission = configManager.nicknameColors().getString(base + "permission", "");
             int priority = configManager.nicknameColors().getInt(base + "priority", 0);
-            loaded.put(id, new NicknameColorDefinition(id, name, format, permission, priority));
+            loaded.put(id, new NicknameColorDefinition(id, name, format == null ? "" : format, gradient, permission, priority));
         }
         colors = Map.copyOf(loaded);
     }
@@ -69,7 +70,7 @@ public final class NicknameColorRegistry {
     }
 
     public String starterId() {
-        return configManager.nicknameColors().getString("starter.color-id", "rose").toLowerCase(Locale.ROOT);
+        return configManager.nicknameColors().getString("starter.color-id", "spicy_apple").toLowerCase(Locale.ROOT);
     }
 
     public boolean starterAutoSelect() {
