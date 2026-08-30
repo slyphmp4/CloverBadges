@@ -503,8 +503,12 @@ public final class PlayerBadgeService implements BadgeApi {
         return Math.max(1, Math.min(10, plugin.getConfig().getInt("limits.max-owned-badges", 10)));
     }
 
-    public void saveAll() {
-        dataStore.saveAll(data.values());
+    public synchronized void saveAll() {
+        dataStore.saveAsync(dataStore.snapshot(data.values()));
+    }
+
+    public synchronized void flushStorage() {
+        dataStore.flushAndClose(dataStore.snapshot(data.values()));
     }
 
     private void saveIfConfigured() {
