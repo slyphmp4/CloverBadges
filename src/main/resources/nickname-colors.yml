@@ -1,36 +1,167 @@
+config-version: 2
+
 starter:
   enabled: true
-  color-id: "rose"
+  color-id: "spicy_apple"
   auto-select: false
 
 colors:
-  rose:
-    name: "&FF6B8AРозовый"
-    format: "&FF6B8A{player}"
+  spicy_apple:
+    name: "&FF3B30Пряное яблоко"
+    gradient:
+      - "#FF2D20"
+      - "#FF8A00"
+    permission: ""
+    priority: 200
+  peach_dream:
+    name: "&FFD166Персиковая мечта"
+    gradient:
+      - "#FFD166"
+      - "#F4A261"
+      - "#FF8FAB"
+    permission: ""
+    priority: 190
+  uranium_stick:
+    name: "&20E050Урановая палочка"
+    gradient:
+      - "#00D94F"
+      - "#C8FF00"
+    permission: ""
+    priority: 180
+  mango:
+    name: "&14B85AМанго"
+    gradient:
+      - "#00A63C"
+      - "#FFB12B"
+      - "#FF7B21"
+    permission: ""
+    priority: 170
+  mint_sakura:
+    name: "&A4F66AМятная сакура"
+    gradient:
+      - "#9CF26B"
+      - "#D6F59A"
+      - "#F0A6C8"
+    permission: ""
+    priority: 160
+  forest_berries:
+    name: "&9A55E8Лесные ягоды"
+    gradient:
+      - "#8F42D8"
+      - "#C63FAF"
+      - "#F04A9B"
+    permission: ""
+    priority: 150
+  lilac_sunset:
+    name: "&7657FFЛиловый закат"
+    gradient:
+      - "#6657FF"
+      - "#B56DFF"
+      - "#E8D7FF"
+    permission: ""
+    priority: 140
+  peacock_tail:
+    name: "&66FF7EПавлиний хвост"
+    gradient:
+      - "#78FF62"
+      - "#24D7B5"
+      - "#4A47FF"
+    permission: ""
+    priority: 130
+  fairy_dust:
+    name: "&F1D6FFСказочная пыль"
+    gradient:
+      - "#F3E9FF"
+      - "#E2A7F0"
+      - "#FFF1C7"
+    permission: ""
+    priority: 120
+  serenity:
+    name: "&66C6FFБезмятежность"
+    gradient:
+      - "#5CC8FF"
+      - "#B9E8FF"
+      - "#FF9B87"
+    permission: ""
+    priority: 110
+  pastel_landscape:
+    name: "&B8F3FFПастельный пейзаж"
+    gradient:
+      - "#B8F3FF"
+      - "#D6E9F5"
+      - "#F8D8E3"
+    permission: ""
+    priority: 100
+  solar_sorbet:
+    name: "&FFD900Солнечный сорбет"
+    gradient:
+      - "#FFD900"
+      - "#FF8A3D"
+      - "#F84ACB"
+    permission: ""
+    priority: 90
+  rising_spring:
+    name: "&FFE1B2Восходящая весна"
+    gradient:
+      - "#FFE1B2"
+      - "#A8E8C1"
+      - "#C9B6FF"
+    permission: ""
+    priority: 80
+  edge_city:
+    name: "&C27CFFГород Края"
+    gradient:
+      - "#C27CFF"
+      - "#E2A8FF"
+      - "#FFF0C8"
+    permission: ""
+    priority: 70
+  neon_rainbow:
+    name: "&00D5FFНеоновая радуга"
+    gradient:
+      - "#00D5FF"
+      - "#30FF55"
+      - "#FFD600"
+      - "#FF2A2A"
     permission: ""
     priority: 60
-  amber:
-    name: "&FFD166Янтарный"
-    format: "&FFD166{player}"
+  prism:
+    name: "&B85CFFПризма"
+    gradient:
+      - "#B85CFF"
+      - "#4DFF7D"
+      - "#FFD93D"
     permission: ""
     priority: 50
-  mint:
-    name: "&63E6BEМятный"
-    format: "&63E6BE{player}"
+  crimson_mist:
+    name: "&FF4567Малиновый туман"
+    gradient:
+      - "#FF4567"
+      - "#FF7A91"
+      - "#FFB4C4"
     permission: ""
     priority: 40
-  sky:
-    name: "&74C0FCНебесный"
-    format: "&74C0FC{player}"
+  aqua_glow:
+    name: "&8CFFF5Аквамариновое сияние"
+    gradient:
+      - "#8CFFF5"
+      - "#4CF0EF"
+      - "#6EE7FF"
     permission: ""
     priority: 30
-  violet:
-    name: "&B197FCФиолетовый"
-    format: "&B197FC{player}"
+  moonlight:
+    name: "&A7A7A7Лунный свет"
+    gradient:
+      - "#8F8F8F"
+      - "#CFCFCF"
+      - "#FFFFFF"
     permission: ""
     priority: 20
-  coral:
-    name: "&FF8A65Коралловый"
-    format: "&FF8A65{player}"
+  starfall:
+    name: "&6E8BFFЗвездопад"
+    gradient:
+      - "#6E8BFF"
+      - "#E3B7FF"
+      - "#FFF4B0"
     permission: ""
     priority: 10
