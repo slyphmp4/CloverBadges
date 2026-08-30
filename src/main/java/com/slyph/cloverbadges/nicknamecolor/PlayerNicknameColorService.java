@@ -273,11 +273,23 @@ public final class PlayerNicknameColorService {
     }
 
     public synchronized void saveAll() {
-        Map<UUID, Map<String, NicknameColorGrant>> snapshot = new HashMap<>();
+        store.saveAsync(snapshot());
+    }
+
+    public synchronized void flushStorage() {
+        store.flushAndClose(snapshot());
+    }
+
+    private NicknameColorStore.Snapshot snapshot() {
+        Map<UUID, Map<String, NicknameColorGrant>> grantSnapshot = new HashMap<>();
         for (Map.Entry<UUID, Map<String, NicknameColorGrant>> entry : grants.entrySet()) {
-            snapshot.put(entry.getKey(), new HashMap<>(entry.getValue()));
+            grantSnapshot.put(entry.getKey(), Map.copyOf(entry.getValue()));
         }
-        store.saveAll(new HashMap<>(selectedColors), snapshot, new HashSet<>(starterInitialized));
+        return new NicknameColorStore.Snapshot(
+                Map.copyOf(selectedColors),
+                Map.copyOf(grantSnapshot),
+                Set.copyOf(starterInitialized)
+        );
     }
 
     private String renderNickname(String playerName, NicknameColorDefinition definition) {

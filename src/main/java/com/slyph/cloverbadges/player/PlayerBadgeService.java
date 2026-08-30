@@ -58,7 +58,15 @@ public final class PlayerBadgeService implements BadgeApi {
         }
 
         PlayerBadgeData playerData = ensure(player);
-        long expiresAt = duration.permanent() ? 0L : System.currentTimeMillis() + duration.millis();
+        long expiresAt = 0L;
+        if (!duration.permanent()) {
+            long now = System.currentTimeMillis();
+            try {
+                expiresAt = Math.addExact(now, duration.millis());
+            } catch (ArithmeticException exception) {
+                expiresAt = Long.MAX_VALUE;
+            }
+        }
         playerData.grants().put(id, new BadgeGrant(expiresAt));
         playerData.suppressedAutomaticBadges().remove(id);
         saveIfConfigured();
@@ -76,7 +84,12 @@ public final class PlayerBadgeService implements BadgeApi {
         boolean changed = playerData.grants().remove(id) != null;
         boolean hadManualSelection = !playerData.selectedBadges().isEmpty();
 
-        if (id.equals(newcomerBadgeId()) && isNewcomerEligibleByTime(player)) {
+        BadgeDefinition definition = registry.get(id).orElseThrow();
+        Player online = player.getPlayer();
+        boolean permissionOwned = definition.hasPermissionSource()
+                && online != null
+                && online.hasPermission(definition.permission());
+        if (permissionOwned || id.equals(newcomerBadgeId()) && isNewcomerEligibleByTime(player)) {
             changed |= playerData.suppressedAutomaticBadges().add(id);
         }
 
@@ -243,9 +256,14 @@ public final class PlayerBadgeService implements BadgeApi {
             return false;
         }
 
-        BadgeGrant grant = ensure(player).grants().get(id);
+        PlayerBadgeData playerData = ensure(player);
+        BadgeGrant grant = playerData.grants().get(id);
         if (grant != null && !grant.expired(System.currentTimeMillis())) {
             return true;
+        }
+
+        if (playerData.suppressedAutomaticBadges().contains(id)) {
+            return false;
         }
 
         BadgeDefinition definition = optionalDefinition.get();
@@ -256,7 +274,7 @@ public final class PlayerBadgeService implements BadgeApi {
             }
         }
 
-        return id.equals(newcomerBadgeId()) && isNewcomer(player);
+        return id.equals(newcomerBadgeId()) && isNewcomerEligibleByTime(player);
     }
 
     @Override
@@ -280,6 +298,11 @@ public final class PlayerBadgeService implements BadgeApi {
         BadgeGrant grant = ensure(player).grants().get(id);
         if (grant != null && !grant.expired(System.currentTimeMillis())) {
             return grant.remaining(System.currentTimeMillis());
+        }
+
+        PlayerBadgeData playerData = ensure(player);
+        if (playerData.suppressedAutomaticBadges().contains(id)) {
+            return 0L;
         }
 
         BadgeDefinition definition = registry.get(id).orElseThrow();
@@ -414,6 +437,10 @@ public final class PlayerBadgeService implements BadgeApi {
             return true;
         }
 
+        if (playerData.suppressedAutomaticBadges().contains(id)) {
+            return false;
+        }
+
         OfflinePlayer player = plugin.getServer().getOfflinePlayer(uuid);
         BadgeDefinition definition = registry.get(id).orElseThrow();
         Player online = player.getPlayer();
@@ -421,9 +448,7 @@ public final class PlayerBadgeService implements BadgeApi {
             return true;
         }
 
-        return id.equals(newcomerBadgeId())
-                && !playerData.suppressedAutomaticBadges().contains(id)
-                && isNewcomerEligibleByTime(player);
+        return id.equals(newcomerBadgeId()) && isNewcomerEligibleByTime(player);
     }
 
     private boolean isAutomaticDisplayEnabledForSource(OfflinePlayer player, String badgeId) {
@@ -478,8 +503,12 @@ public final class PlayerBadgeService implements BadgeApi {
         return Math.max(1, Math.min(10, plugin.getConfig().getInt("limits.max-owned-badges", 10)));
     }
 
-    public void saveAll() {
-        dataStore.saveAll(data.values());
+    public synchronized void saveAll() {
+        dataStore.saveAsync(dataStore.snapshot(data.values()));
+    }
+
+    public synchronized void flushStorage() {
+        dataStore.flushAndClose(dataStore.snapshot(data.values()));
     }
 
     private void saveIfConfigured() {

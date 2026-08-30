@@ -120,15 +120,18 @@ public final class ConfigManager {
 
     private void migrateNicknameColorKeys(YamlConfiguration configuration) {
         int version = configuration.getInt("config-version", 1);
-        if (version >= 2) {
-            return;
+        if (version < 2) {
+            ConfigurationSection colors = configuration.getConfigurationSection("colors");
+            if (colors != null && colors.getKeys(false).equals(LEGACY_DEFAULT_PAINTS)) {
+                configuration.set("colors", null);
+                configuration.set("starter.color-id", "spicy_apple");
+            }
+            configuration.set("config-version", 2);
+            version = 2;
         }
-        ConfigurationSection colors = configuration.getConfigurationSection("colors");
-        if (colors != null && colors.getKeys(false).equals(LEGACY_DEFAULT_PAINTS)) {
-            configuration.set("colors", null);
-            configuration.set("starter.color-id", "spicy_apple");
+        if (version < 3) {
+            configuration.set("config-version", 3);
         }
-        configuration.set("config-version", 2);
     }
 
     private void migrateGuiKeys(YamlConfiguration configuration) {
@@ -228,6 +231,10 @@ public final class ConfigManager {
                 configuration.set("nickname-colors.pagination.next.slot", 51);
             }
             configuration.set("menu.layout-version", 10);
+            layoutVersion = 10;
+        }
+        if (layoutVersion < 11) {
+            configuration.set("menu.layout-version", 11);
         }
     }
 

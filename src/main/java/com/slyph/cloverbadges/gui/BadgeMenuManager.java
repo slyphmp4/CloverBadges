@@ -55,7 +55,7 @@ public final class BadgeMenuManager {
         String fallback = page == MenuPage.BADGES ? "&8Значки" : "&8";
         String title = pagePlaceholders(placeholders(configManager.gui().getString(titlePath, fallback), player, null, badgeCount, activeCount), page);
         BadgeMenuHolder holder = new BadgeMenuHolder(player.getUniqueId(), page);
-        Inventory inventory = Bukkit.createInventory(holder, size, ColorUtil.legacySection(title));
+        Inventory inventory = Bukkit.createInventory(holder, size, ColorUtil.component(title));
         holder.inventory(inventory);
         render(holder, player);
         player.openInventory(inventory);

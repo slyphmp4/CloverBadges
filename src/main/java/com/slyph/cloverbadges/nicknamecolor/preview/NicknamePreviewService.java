@@ -10,11 +10,16 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class NicknamePreviewService {
     private final CloverBadges plugin;
     private final PlayerBadgeService badgeService;
+    private final Map<MethodKey, Method> methods = new ConcurrentHashMap<>();
+    private volatile Object ultraPermissionsApi;
+    private volatile boolean ultraPermissionsResolved;
 
     public NicknamePreviewService(CloverBadges plugin, PlayerBadgeService badgeService) {
         this.plugin = plugin;
@@ -46,8 +51,10 @@ public final class NicknamePreviewService {
             return "";
         }
         try {
-            Class<?> ultraPermissions = Class.forName("me.TechsCode.UltraPermissions.UltraPermissions");
-            Object api = ultraPermissions.getMethod("getAPI").invoke(null);
+            Object api = resolveUltraPermissionsApi();
+            if (api == null) {
+                return "";
+            }
             Object users = invokeNoArgs(api, "getUsers");
             Object user = invokeOneArg(users, "uuid", UUID.class, player.getUniqueId());
 
@@ -66,14 +73,43 @@ public final class NicknamePreviewService {
         }
     }
 
+    private Object resolveUltraPermissionsApi() throws ReflectiveOperationException {
+        if (ultraPermissionsResolved) {
+            return ultraPermissionsApi;
+        }
+        synchronized (this) {
+            if (ultraPermissionsResolved) {
+                return ultraPermissionsApi;
+            }
+            try {
+                Class<?> ultraPermissions = Class.forName("me.TechsCode.UltraPermissions.UltraPermissions");
+                ultraPermissionsApi = ultraPermissions.getMethod("getAPI").invoke(null);
+                return ultraPermissionsApi;
+            } finally {
+                ultraPermissionsResolved = true;
+            }
+        }
+    }
+
     private Object invokeNoArgs(Object target, String methodName) throws ReflectiveOperationException {
-        Method method = target.getClass().getMethod(methodName);
+        Method method = method(target.getClass(), methodName);
         return method.invoke(target);
     }
 
     private Object invokeOneArg(Object target, String methodName, Class<?> type, Object value) throws ReflectiveOperationException {
-        Method method = target.getClass().getMethod(methodName, type);
+        Method method = method(target.getClass(), methodName, type);
         return method.invoke(target, value);
+    }
+
+    private Method method(Class<?> type, String name, Class<?>... parameterTypes) throws NoSuchMethodException {
+        MethodKey key = new MethodKey(type, name, List.of(parameterTypes));
+        Method cached = methods.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        Method resolved = type.getMethod(name, parameterTypes);
+        Method existing = methods.putIfAbsent(key, resolved);
+        return existing == null ? resolved : existing;
     }
 
     private String invokeString(Object target, String methodName) {
@@ -93,7 +129,7 @@ public final class NicknamePreviewService {
             return value;
         }
         try {
-            Method get = value.getClass().getMethod("get");
+            Method get = method(value.getClass(), "get");
             return get.invoke(value);
         } catch (ReflectiveOperationException exception) {
             return value;
@@ -124,5 +160,8 @@ public final class NicknamePreviewService {
         if (!trimmed.isEmpty()) {
             parts.add(trimmed);
         }
+    }
+
+    private record MethodKey(Class<?> type, String name, List<Class<?>> parameterTypes) {
     }
 }

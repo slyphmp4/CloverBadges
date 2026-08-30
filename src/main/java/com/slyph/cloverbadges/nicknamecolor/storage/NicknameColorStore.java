@@ -2,6 +2,7 @@ package com.slyph.cloverbadges.nicknamecolor.storage;
 
 import com.slyph.cloverbadges.CloverBadges;
 import com.slyph.cloverbadges.nicknamecolor.NicknameColorGrant;
+import com.slyph.cloverbadges.storage.AsyncYamlWriter;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -18,12 +19,12 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class NicknameColorStore {
-    private final CloverBadges plugin;
     private final File file;
+    private final AsyncYamlWriter<Snapshot> writer;
 
     public NicknameColorStore(CloverBadges plugin) {
-        this.plugin = plugin;
         this.file = new File(plugin.getDataFolder(), "nickname-colors-data.yml");
+        this.writer = new AsyncYamlWriter<>(plugin, "CloverBadges-NicknameColors", file.getName(), this::write);
     }
 
     public Snapshot loadAll() {
@@ -82,27 +83,31 @@ public final class NicknameColorStore {
         return new Snapshot(selected, grants, starterInitialized);
     }
 
-    public synchronized void saveAll(
-            Map<UUID, String> selectedColors,
-            Map<UUID, Map<String, NicknameColorGrant>> grants,
-            Set<UUID> starterInitialized
-    ) {
+    public void saveAsync(Snapshot snapshot) {
+        writer.submit(snapshot);
+    }
+
+    public void flushAndClose(Snapshot snapshot) {
+        writer.close(snapshot);
+    }
+
+    private void write(Snapshot snapshot) throws IOException {
         YamlConfiguration yaml = new YamlConfiguration();
         Set<UUID> players = new HashSet<>();
-        players.addAll(selectedColors.keySet());
-        players.addAll(grants.keySet());
-        players.addAll(starterInitialized);
+        players.addAll(snapshot.selectedColors().keySet());
+        players.addAll(snapshot.grants().keySet());
+        players.addAll(snapshot.starterInitialized());
 
         for (UUID uuid : players) {
             String base = "players." + uuid + ".";
-            String selected = selectedColors.get(uuid);
+            String selected = snapshot.selectedColors().get(uuid);
             if (selected != null && !selected.isBlank()) {
                 yaml.set(base + "selected", selected);
             }
-            if (starterInitialized.contains(uuid)) {
+            if (snapshot.starterInitialized().contains(uuid)) {
                 yaml.set(base + "starter-initialized", true);
             }
-            Map<String, NicknameColorGrant> playerGrants = grants.get(uuid);
+            Map<String, NicknameColorGrant> playerGrants = snapshot.grants().get(uuid);
             if (playerGrants != null) {
                 for (Map.Entry<String, NicknameColorGrant> entry : playerGrants.entrySet()) {
                     yaml.set(base + "grants." + entry.getKey() + ".expires-at", entry.getValue().expiresAt());
@@ -111,15 +116,11 @@ public final class NicknameColorStore {
         }
 
         File temporary = new File(file.getParentFile(), file.getName() + ".tmp");
+        yaml.save(temporary);
         try {
-            yaml.save(temporary);
-            try {
-                Files.move(temporary.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-            } catch (AtomicMoveNotSupportedException exception) {
-                Files.move(temporary.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            }
-        } catch (IOException exception) {
-            plugin.getLogger().severe("Не удалось сохранить nickname-colors-data.yml: " + exception.getMessage());
+            Files.move(temporary.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException exception) {
+            Files.move(temporary.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
