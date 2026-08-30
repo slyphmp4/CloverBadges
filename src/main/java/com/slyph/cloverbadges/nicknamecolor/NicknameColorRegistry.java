@@ -59,4 +59,20 @@ public final class NicknameColorRegistry {
                 .sorted(Comparator.comparingInt(NicknameColorDefinition::priority).reversed().thenComparing(NicknameColorDefinition::id))
                 .toList();
     }
+
+    public List<String> allIds() {
+        return sorted().stream().map(NicknameColorDefinition::id).toList();
+    }
+
+    public boolean starterEnabled() {
+        return configManager.nicknameColors().getBoolean("starter.enabled", true);
+    }
+
+    public String starterId() {
+        return configManager.nicknameColors().getString("starter.color-id", "rose").toLowerCase(Locale.ROOT);
+    }
+
+    public boolean starterAutoSelect() {
+        return configManager.nicknameColors().getBoolean("starter.auto-select", false);
+    }
 }

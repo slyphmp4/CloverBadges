@@ -1,5 +1,6 @@
 package com.slyph.cloverbadges.command;
 
+import com.slyph.cloverbadges.nicknamecolor.PlayerNicknameColorService;
 import com.slyph.cloverbadges.player.PlayerBadgeService;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -15,10 +16,12 @@ import java.util.List;
 import java.util.Locale;
 
 public final class BadgeTabCompleter implements TabCompleter {
-    private final PlayerBadgeService service;
+    private final PlayerBadgeService badgeService;
+    private final PlayerNicknameColorService paintService;
 
-    public BadgeTabCompleter(PlayerBadgeService service) {
-        this.service = service;
+    public BadgeTabCompleter(PlayerBadgeService badgeService, PlayerNicknameColorService paintService) {
+        this.badgeService = badgeService;
+        this.paintService = paintService;
     }
 
     @Override
@@ -36,27 +39,44 @@ public final class BadgeTabCompleter implements TabCompleter {
         }
 
         String sub = args[0].toLowerCase(Locale.ROOT);
-        if ((sub.equals("give") && sender.hasPermission("cloverbadges.admin.give"))
-                || (sub.equals("remove") && sender.hasPermission("cloverbadges.admin.remove"))) {
-            if (args.length == 2) {
-                return filter(onlineNames(), args[1]);
+        boolean give = sub.equals("give") && sender.hasPermission("cloverbadges.admin.give");
+        boolean remove = sub.equals("remove") && sender.hasPermission("cloverbadges.admin.remove");
+        if (!give && !remove) {
+            return List.of();
+        }
+
+        if (args.length == 2) {
+            return filter(onlineNames(), args[1]);
+        }
+        if (args.length == 3) {
+            return filter(List.of("badge", "paint"), args[2]);
+        }
+        if (args.length == 4) {
+            Player target = Bukkit.getPlayerExact(args[1]);
+            if (target == null) {
+                return List.of();
             }
-            if (args.length == 3) {
-                Player target = Bukkit.getPlayerExact(args[1]);
-                if (target == null) {
-                    return List.of();
+            String category = args[2].toLowerCase(Locale.ROOT);
+            if (category.equals("badge")) {
+                if (give) {
+                    return filter(badgeService.allBadgeIds().stream()
+                            .filter(id -> !badgeService.hasBadge(target, id))
+                            .toList(), args[3]);
                 }
-                if (sub.equals("give")) {
-                    return filter(service.allBadgeIds().stream()
-                            .filter(id -> !service.hasBadge(target, id))
-                            .toList(), args[2]);
+                return filter(badgeService.getOwnedBadgeIds(target), args[3]);
+            }
+            if (category.equals("paint")) {
+                if (give) {
+                    return filter(paintService.allColorIds().stream()
+                            .filter(id -> !paintService.hasColor(target, id))
+                            .toList(), args[3]);
                 }
-                return filter(service.getOwnedBadgeIds(target), args[2]);
+                return filter(paintService.getOwnedColorIds(target), args[3]);
             }
         }
 
-        if (sub.equals("give") && args.length == 4 && sender.hasPermission("cloverbadges.admin.give")) {
-            return filter(List.of("permanent", "30m", "1h", "1d", "7d", "30d"), args[3]);
+        if (give && args.length == 5) {
+            return filter(List.of("permanent", "30m", "1h", "1d", "7d", "30d"), args[4]);
         }
 
         return List.of();

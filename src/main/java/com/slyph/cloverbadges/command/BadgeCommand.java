@@ -3,6 +3,7 @@ package com.slyph.cloverbadges.command;
 import com.slyph.cloverbadges.CloverBadges;
 import com.slyph.cloverbadges.gui.BadgeMenuManager;
 import com.slyph.cloverbadges.message.MessageService;
+import com.slyph.cloverbadges.nicknamecolor.PlayerNicknameColorService;
 import com.slyph.cloverbadges.player.PlayerBadgeService;
 import com.slyph.cloverbadges.util.DurationParser;
 import org.bukkit.Bukkit;
@@ -18,13 +19,21 @@ import java.util.Optional;
 
 public final class BadgeCommand implements CommandExecutor {
     private final CloverBadges plugin;
-    private final PlayerBadgeService service;
+    private final PlayerBadgeService badgeService;
+    private final PlayerNicknameColorService paintService;
     private final MessageService messages;
     private final BadgeMenuManager menuManager;
 
-    public BadgeCommand(CloverBadges plugin, PlayerBadgeService service, MessageService messages, BadgeMenuManager menuManager) {
+    public BadgeCommand(
+            CloverBadges plugin,
+            PlayerBadgeService badgeService,
+            PlayerNicknameColorService paintService,
+            MessageService messages,
+            BadgeMenuManager menuManager
+    ) {
         this.plugin = plugin;
-        this.service = service;
+        this.badgeService = badgeService;
+        this.paintService = paintService;
         this.messages = messages;
         this.menuManager = menuManager;
     }
@@ -61,7 +70,7 @@ public final class BadgeCommand implements CommandExecutor {
             messages.send(sender, "no-permission");
             return true;
         }
-        if (args.length < 3) {
+        if (args.length < 4) {
             sendHelp(sender);
             return true;
         }
@@ -72,41 +81,50 @@ public final class BadgeCommand implements CommandExecutor {
             return true;
         }
 
-        String id = args[2].toLowerCase();
-        if (service.getDefinition(id).isEmpty()) {
-            messages.send(sender, "badge-not-found", Map.of("badge", id));
-            return true;
-        }
-
-        if (service.hasBadge(target, id)) {
-            messages.send(sender, "badge-already-owned", Map.of(
-                    "player", displayName(target),
-                    "badge", service.getBadgeName(id)
-            ));
-            return true;
-        }
-
-        Optional<DurationParser.ParsedDuration> parsed = DurationParser.parse(args.length >= 4 ? args[3] : "permanent");
+        String category = args[2].toLowerCase();
+        String id = args[3].toLowerCase();
+        Optional<DurationParser.ParsedDuration> parsed = DurationParser.parse(args.length >= 5 ? args[4] : "permanent");
         if (parsed.isEmpty()) {
             messages.send(sender, "invalid-duration");
             return true;
         }
 
-        if (!service.grant(target, id, parsed.get())) {
+        if (category.equals("badge")) {
+            return giveBadge(sender, target, id, parsed.get());
+        }
+        if (category.equals("paint")) {
+            return givePaint(sender, target, id, parsed.get());
+        }
+
+        messages.send(sender, "invalid-category");
+        return true;
+    }
+
+    private boolean giveBadge(CommandSender sender, OfflinePlayer target, String id, DurationParser.ParsedDuration duration) {
+        if (badgeService.getDefinition(id).isEmpty()) {
+            messages.send(sender, "badge-not-found", Map.of("badge", id));
+            return true;
+        }
+        if (badgeService.hasBadge(target, id)) {
+            messages.send(sender, "badge-already-owned", Map.of(
+                    "player", displayName(target),
+                    "badge", badgeService.getBadgeName(id)
+            ));
+            return true;
+        }
+        if (!badgeService.grant(target, id, duration)) {
             messages.send(sender, "badge-limit-owned", Map.of(
                     "player", displayName(target),
-                    "max", Integer.toString(service.maxOwnedBadges())
+                    "max", Integer.toString(badgeService.maxOwnedBadges())
             ));
             return true;
         }
 
-        String duration = parsed.get().permanent()
-                ? plugin.getConfig().getString("placeholders.permanent-text", "навсегда")
-                : DurationParser.format(parsed.get().millis());
+        String formattedDuration = formattedDuration(duration);
         Map<String, String> replacements = Map.of(
                 "player", displayName(target),
-                "badge", service.getBadgeName(id),
-                "duration", duration
+                "badge", badgeService.getBadgeName(id),
+                "duration", formattedDuration
         );
         messages.send(sender, "badge-given", replacements);
         Player online = target.getPlayer();
@@ -116,12 +134,46 @@ public final class BadgeCommand implements CommandExecutor {
         return true;
     }
 
+    private boolean givePaint(CommandSender sender, OfflinePlayer target, String id, DurationParser.ParsedDuration duration) {
+        if (paintService.getDefinition(id).isEmpty()) {
+            messages.send(sender, "paint-not-found", Map.of("paint", id));
+            return true;
+        }
+        if (paintService.hasColor(target, id)) {
+            messages.send(sender, "paint-already-owned", Map.of(
+                    "player", displayName(target),
+                    "paint", paintService.getColorName(id)
+            ));
+            return true;
+        }
+        if (!paintService.grant(target, id, duration)) {
+            messages.send(sender, "paint-already-owned", Map.of(
+                    "player", displayName(target),
+                    "paint", paintService.getColorName(id)
+            ));
+            return true;
+        }
+
+        String formattedDuration = formattedDuration(duration);
+        Map<String, String> replacements = Map.of(
+                "player", displayName(target),
+                "paint", paintService.getColorName(id),
+                "duration", formattedDuration
+        );
+        messages.send(sender, "paint-given", replacements);
+        Player online = target.getPlayer();
+        if (online != null && !online.equals(sender)) {
+            messages.send(online, "paint-received", replacements);
+        }
+        return true;
+    }
+
     private boolean remove(CommandSender sender, String[] args) {
         if (!sender.hasPermission("cloverbadges.admin.remove")) {
             messages.send(sender, "no-permission");
             return true;
         }
-        if (args.length < 3) {
+        if (args.length < 4) {
             sendHelp(sender);
             return true;
         }
@@ -132,36 +184,65 @@ public final class BadgeCommand implements CommandExecutor {
             return true;
         }
 
-        String id = args[2].toLowerCase();
-        if (service.getDefinition(id).isEmpty()) {
+        String category = args[2].toLowerCase();
+        String id = args[3].toLowerCase();
+        if (category.equals("badge")) {
+            return removeBadge(sender, target, id);
+        }
+        if (category.equals("paint")) {
+            return removePaint(sender, target, id);
+        }
+
+        messages.send(sender, "invalid-category");
+        return true;
+    }
+
+    private boolean removeBadge(CommandSender sender, OfflinePlayer target, String id) {
+        if (badgeService.getDefinition(id).isEmpty()) {
             messages.send(sender, "badge-not-found", Map.of("badge", id));
             return true;
         }
-
-        if (!service.hasBadge(target, id)) {
+        if (!badgeService.hasBadge(target, id) || !badgeService.revoke(target, id)) {
             messages.send(sender, "target-badge-not-owned", Map.of(
                     "player", displayName(target),
-                    "badge", service.getBadgeName(id)
-            ));
-            return true;
-        }
-
-        if (!service.revoke(target, id)) {
-            messages.send(sender, "target-badge-not-owned", Map.of(
-                    "player", displayName(target),
-                    "badge", service.getBadgeName(id)
+                    "badge", badgeService.getBadgeName(id)
             ));
             return true;
         }
 
         Map<String, String> replacements = Map.of(
                 "player", displayName(target),
-                "badge", service.getBadgeName(id)
+                "badge", badgeService.getBadgeName(id)
         );
         messages.send(sender, "badge-remove-success", replacements);
         Player online = target.getPlayer();
         if (online != null && !online.equals(sender)) {
             messages.send(online, "badge-removed", replacements);
+        }
+        return true;
+    }
+
+    private boolean removePaint(CommandSender sender, OfflinePlayer target, String id) {
+        if (paintService.getDefinition(id).isEmpty()) {
+            messages.send(sender, "paint-not-found", Map.of("paint", id));
+            return true;
+        }
+        if (!paintService.hasColor(target, id) || !paintService.revoke(target, id)) {
+            messages.send(sender, "target-paint-not-owned", Map.of(
+                    "player", displayName(target),
+                    "paint", paintService.getColorName(id)
+            ));
+            return true;
+        }
+
+        Map<String, String> replacements = Map.of(
+                "player", displayName(target),
+                "paint", paintService.getColorName(id)
+        );
+        messages.send(sender, "paint-remove-success", replacements);
+        Player online = target.getPlayer();
+        if (online != null && !online.equals(sender)) {
+            messages.send(online, "paint-removed", replacements);
         }
         return true;
     }
@@ -188,6 +269,12 @@ public final class BadgeCommand implements CommandExecutor {
             messages.send(sender, "help-reload");
         }
         messages.send(sender, "help-footer");
+    }
+
+    private String formattedDuration(DurationParser.ParsedDuration duration) {
+        return duration.permanent()
+                ? plugin.getConfig().getString("placeholders.permanent-text", "навсегда")
+                : DurationParser.format(duration.millis());
     }
 
     private OfflinePlayer findPlayer(String input) {

@@ -57,10 +57,10 @@ public final class CloverBadges extends JavaPlugin {
         );
 
         PluginCommand badgeCommand = Objects.requireNonNull(getCommand("badge"));
-        badgeCommand.setExecutor(new BadgeCommand(this, badgeService, messageService, menuManager));
-        badgeCommand.setTabCompleter(new BadgeTabCompleter(badgeService));
+        badgeCommand.setExecutor(new BadgeCommand(this, badgeService, nicknameColorService, messageService, menuManager));
+        badgeCommand.setTabCompleter(new BadgeTabCompleter(badgeService, nicknameColorService));
 
-        getServer().getPluginManager().registerEvents(new PlayerListener(badgeService), this);
+        getServer().getPluginManager().registerEvents(new PlayerListener(badgeService, nicknameColorService), this);
         getServer().getPluginManager().registerEvents(new BadgeMenuListener(menuManager), this);
         getServer().getServicesManager().register(BadgeApi.class, badgeService, this, ServicePriority.Normal);
 
@@ -107,7 +107,10 @@ public final class CloverBadges extends JavaPlugin {
             cleanupTask.cancel();
         }
         long interval = Math.max(20L, getConfig().getLong("storage.cleanup-interval-ticks", 6000L));
-        cleanupTask = getServer().getScheduler().runTaskTimer(this, badgeService::cleanupExpired, interval, interval);
+        cleanupTask = getServer().getScheduler().runTaskTimer(this, () -> {
+            badgeService.cleanupExpired();
+            nicknameColorService.cleanupExpired();
+        }, interval, interval);
     }
 
     public BadgeApi getBadgeApi() {

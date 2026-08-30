@@ -87,9 +87,7 @@ public final class ConfigManager {
             if (inputStream == null) {
                 return configuration;
             }
-            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
-                    new InputStreamReader(inputStream, StandardCharsets.UTF_8)
-            );
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
             configuration.setDefaults(defaults);
             configuration.options().copyDefaults(true);
             configuration.save(file);
@@ -183,6 +181,20 @@ public final class ConfigManager {
             migrateNicknameColorMaterial(configuration, "violet", "PURPLE_DYE");
             migrateNicknameColorMaterial(configuration, "coral", "RED_DYE");
             configuration.set("menu.layout-version", 8);
+            layoutVersion = 8;
+        }
+        if (layoutVersion < 9) {
+            if (!configuration.contains("nickname-colors.empty-slot.material")) {
+                configuration.set("nickname-colors.empty-slot.material", "LIGHT_GRAY_STAINED_GLASS_PANE");
+                configuration.set("nickname-colors.empty-slot.name", "&7");
+                configuration.set("nickname-colors.empty-slot.lore", List.of(
+                        " &C4C4C4◇ Пусто...",
+                        "",
+                        " &A3A3A3Здесь появится следующая полученная покраска ",
+                        "&7"
+                ));
+            }
+            configuration.set("menu.layout-version", 9);
         }
     }
 
@@ -198,7 +210,6 @@ public final class ConfigManager {
         if (section == null) {
             return false;
         }
-
         boolean changed = false;
         for (String badgeId : section.getKeys(false)) {
             String sourcePath = "badges." + badgeId + ".gui";
@@ -206,12 +217,10 @@ public final class ConfigManager {
             if (source == null) {
                 continue;
             }
-
             String targetPath = "badges." + badgeId;
             if (!gui.contains(targetPath)) {
                 copySection(source, gui, targetPath);
             }
-
             badges.set(sourcePath, null);
             changed = true;
         }
@@ -221,10 +230,9 @@ public final class ConfigManager {
     private void copySection(ConfigurationSection source, YamlConfiguration target, String targetPath) {
         for (String key : source.getKeys(true)) {
             Object value = source.get(key);
-            if (value instanceof ConfigurationSection) {
-                continue;
+            if (!(value instanceof ConfigurationSection)) {
+                target.set(targetPath + "." + key, value);
             }
-            target.set(targetPath + "." + key, value);
         }
     }
 

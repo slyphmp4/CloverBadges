@@ -3,12 +3,19 @@ package com.slyph.cloverbadges.nicknamecolor;
 import com.slyph.cloverbadges.CloverBadges;
 import com.slyph.cloverbadges.nicknamecolor.storage.NicknameColorStore;
 import com.slyph.cloverbadges.util.ColorUtil;
+import com.slyph.cloverbadges.util.DurationParser;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,22 +24,67 @@ public final class PlayerNicknameColorService {
     private final NicknameColorRegistry registry;
     private final NicknameColorStore store;
     private final Map<UUID, String> selectedColors;
+    private final Map<UUID, Map<String, NicknameColorGrant>> grants;
+    private final Set<UUID> starterInitialized;
 
     public PlayerNicknameColorService(CloverBadges plugin, NicknameColorRegistry registry, NicknameColorStore store) {
         this.plugin = plugin;
         this.registry = registry;
         this.store = store;
-        this.selectedColors = new ConcurrentHashMap<>(store.loadAll());
-        cleanupInvalidSelections();
+        NicknameColorStore.Snapshot snapshot = store.loadAll();
+        this.selectedColors = new ConcurrentHashMap<>(snapshot.selectedColors());
+        this.grants = new ConcurrentHashMap<>();
+        for (Map.Entry<UUID, Map<String, NicknameColorGrant>> entry : snapshot.grants().entrySet()) {
+            this.grants.put(entry.getKey(), new ConcurrentHashMap<>(entry.getValue()));
+        }
+        this.starterInitialized = ConcurrentHashMap.newKeySet();
+        this.starterInitialized.addAll(snapshot.starterInitialized());
+        cleanupInvalidData();
     }
 
-    public void reload() {
+    public synchronized void reload() {
         registry.reload();
-        cleanupInvalidSelections();
+        cleanupInvalidData();
+    }
+
+    public synchronized void ensure(Player player) {
+        UUID uuid = player.getUniqueId();
+        boolean changed = cleanupExpired(uuid);
+
+        if (starterInitialized.add(uuid)) {
+            changed = true;
+            if (registry.starterEnabled()) {
+                String starterId = registry.starterId();
+                Optional<NicknameColorDefinition> starter = registry.get(starterId);
+                if (starter.isPresent() && !hasColorInternal(uuid, starterId, System.currentTimeMillis())) {
+                    grants.computeIfAbsent(uuid, ignored -> new ConcurrentHashMap<>())
+                            .put(starterId, new NicknameColorGrant(0L));
+                    changed = true;
+                }
+                if (starter.isPresent() && registry.starterAutoSelect() && isAvailable(player, starter.get())) {
+                    selectedColors.put(uuid, starterId);
+                    changed = true;
+                }
+            }
+        }
+
+        String selected = selectedColors.get(uuid);
+        if (selected != null && !hasColorInternal(uuid, selected, System.currentTimeMillis())) {
+            selectedColors.remove(uuid);
+            changed = true;
+        }
+
+        if (changed) {
+            saveIfConfigured();
+        }
     }
 
     public List<NicknameColorDefinition> allColors() {
         return registry.sorted();
+    }
+
+    public List<String> allColorIds() {
+        return registry.allIds();
     }
 
     public Optional<NicknameColorDefinition> getDefinition(String id) {
@@ -43,28 +95,67 @@ public final class PlayerNicknameColorService {
         return !definition.hasPermission() || player.hasPermission(definition.permission());
     }
 
-    public Optional<String> selectedId(OfflinePlayer player) {
-        String id = selectedColors.get(player.getUniqueId());
-        if (id == null) {
-            return Optional.empty();
+    public synchronized boolean hasColor(OfflinePlayer player, String colorId) {
+        String id = normalize(colorId);
+        if (registry.get(id).isEmpty()) {
+            return false;
         }
-        Optional<NicknameColorDefinition> definition = registry.get(id);
-        if (definition.isEmpty()) {
-            return Optional.empty();
+        boolean owned = hasColorInternal(player.getUniqueId(), id, System.currentTimeMillis());
+        if (!owned && removeExpiredGrant(player.getUniqueId(), id)) {
+            saveIfConfigured();
         }
-        Player online = player.getPlayer();
-        if (definition.get().hasPermission() && (online == null || !online.hasPermission(definition.get().permission()))) {
+        return owned;
+    }
+
+    public synchronized List<String> getOwnedColorIds(OfflinePlayer player) {
+        UUID uuid = player.getUniqueId();
+        if (cleanupExpired(uuid)) {
+            saveIfConfigured();
+        }
+        Map<String, NicknameColorGrant> playerGrants = grants.get(uuid);
+        if (playerGrants == null || playerGrants.isEmpty()) {
+            return List.of();
+        }
+        return playerGrants.keySet().stream()
+                .filter(id -> registry.get(id).isPresent())
+                .sorted(Comparator
+                        .comparingInt((String id) -> registry.get(id).map(NicknameColorDefinition::priority).orElse(0))
+                        .reversed()
+                        .thenComparing(id -> id))
+                .toList();
+    }
+
+    public synchronized List<NicknameColorDefinition> getOwnedColors(OfflinePlayer player) {
+        List<NicknameColorDefinition> result = new ArrayList<>();
+        for (String id : getOwnedColorIds(player)) {
+            registry.get(id).ifPresent(result::add);
+        }
+        return List.copyOf(result);
+    }
+
+    public synchronized Optional<String> selectedId(OfflinePlayer player) {
+        UUID uuid = player.getUniqueId();
+        if (cleanupExpired(uuid)) {
+            saveIfConfigured();
+        }
+        String id = selectedColors.get(uuid);
+        if (id == null || registry.get(id).isEmpty() || !hasColorInternal(uuid, id, System.currentTimeMillis())) {
+            if (id != null) {
+                selectedColors.remove(uuid);
+                saveIfConfigured();
+            }
             return Optional.empty();
         }
         return Optional.of(id);
     }
 
     public synchronized boolean select(Player player, String colorId) {
-        Optional<NicknameColorDefinition> definition = registry.get(colorId);
-        if (definition.isEmpty() || !isAvailable(player, definition.get())) {
+        String id = normalize(colorId);
+        Optional<NicknameColorDefinition> definition = registry.get(id);
+        if (definition.isEmpty() || !hasColorInternal(player.getUniqueId(), id, System.currentTimeMillis()) || !isAvailable(player, definition.get())) {
             return false;
         }
-        selectedColors.put(player.getUniqueId(), definition.get().id());
+        selectedColors.put(player.getUniqueId(), id);
         saveIfConfigured();
         return true;
     }
@@ -73,6 +164,48 @@ public final class PlayerNicknameColorService {
         if (selectedColors.remove(player.getUniqueId()) != null) {
             saveIfConfigured();
         }
+    }
+
+    public synchronized boolean grant(OfflinePlayer player, String colorId, DurationParser.ParsedDuration duration) {
+        String id = normalize(colorId);
+        if (registry.get(id).isEmpty()) {
+            return false;
+        }
+        UUID uuid = player.getUniqueId();
+        long now = System.currentTimeMillis();
+        cleanupExpired(uuid);
+        if (hasColorInternal(uuid, id, now)) {
+            return false;
+        }
+        long expiresAt = 0L;
+        if (!duration.permanent()) {
+            try {
+                expiresAt = Math.addExact(now, duration.millis());
+            } catch (ArithmeticException exception) {
+                expiresAt = Long.MAX_VALUE;
+            }
+        }
+        grants.computeIfAbsent(uuid, ignored -> new ConcurrentHashMap<>())
+                .put(id, new NicknameColorGrant(expiresAt));
+        saveIfConfigured();
+        return true;
+    }
+
+    public synchronized boolean revoke(OfflinePlayer player, String colorId) {
+        String id = normalize(colorId);
+        UUID uuid = player.getUniqueId();
+        Map<String, NicknameColorGrant> playerGrants = grants.get(uuid);
+        if (playerGrants == null || playerGrants.remove(id) == null) {
+            return false;
+        }
+        if (playerGrants.isEmpty()) {
+            grants.remove(uuid);
+        }
+        if (id.equals(selectedColors.get(uuid))) {
+            selectedColors.remove(uuid);
+        }
+        saveIfConfigured();
+        return true;
     }
 
     public String getColorName(String id) {
@@ -100,15 +233,117 @@ public final class PlayerNicknameColorService {
         return ColorUtil.legacySection(rendered + "&r");
     }
 
-    public void saveAll() {
-        store.saveAll(selectedColors);
+    public synchronized String formatRemaining(OfflinePlayer player, String colorId) {
+        String id = normalize(colorId);
+        Map<String, NicknameColorGrant> playerGrants = grants.get(player.getUniqueId());
+        NicknameColorGrant grant = playerGrants == null ? null : playerGrants.get(id);
+        if (grant == null) {
+            return plugin.getConfig().getString("placeholders.expired-text", "0с");
+        }
+        if (grant.permanent()) {
+            return plugin.getConfig().getString("placeholders.permanent-text", "навсегда");
+        }
+        long remaining = grant.remaining(System.currentTimeMillis());
+        if (remaining <= 0L) {
+            return plugin.getConfig().getString("placeholders.expired-text", "0с");
+        }
+        return DurationParser.format(remaining);
     }
 
-    private void cleanupInvalidSelections() {
-        boolean changed = selectedColors.entrySet().removeIf(entry -> registry.get(entry.getValue()).isEmpty());
+    public synchronized void cleanupExpired() {
+        boolean changed = false;
+        for (UUID uuid : new HashSet<>(grants.keySet())) {
+            changed |= cleanupExpired(uuid);
+        }
         if (changed) {
             saveIfConfigured();
         }
+    }
+
+    public synchronized void saveAll() {
+        Map<UUID, Map<String, NicknameColorGrant>> snapshot = new HashMap<>();
+        for (Map.Entry<UUID, Map<String, NicknameColorGrant>> entry : grants.entrySet()) {
+            snapshot.put(entry.getKey(), new HashMap<>(entry.getValue()));
+        }
+        store.saveAll(new HashMap<>(selectedColors), snapshot, new HashSet<>(starterInitialized));
+    }
+
+    private void cleanupInvalidData() {
+        boolean changed = false;
+        long now = System.currentTimeMillis();
+        for (UUID uuid : new HashSet<>(grants.keySet())) {
+            Map<String, NicknameColorGrant> playerGrants = grants.get(uuid);
+            if (playerGrants == null) {
+                continue;
+            }
+            changed |= playerGrants.entrySet().removeIf(entry -> registry.get(entry.getKey()).isEmpty() || entry.getValue().expired(now));
+            if (playerGrants.isEmpty()) {
+                grants.remove(uuid);
+            }
+        }
+        changed |= selectedColors.entrySet().removeIf(entry -> registry.get(entry.getValue()).isEmpty()
+                || !hasColorInternal(entry.getKey(), entry.getValue(), now));
+        if (changed) {
+            saveIfConfigured();
+        }
+    }
+
+    private boolean cleanupExpired(UUID uuid) {
+        Map<String, NicknameColorGrant> playerGrants = grants.get(uuid);
+        if (playerGrants == null) {
+            return false;
+        }
+        long now = System.currentTimeMillis();
+        Set<String> expired = new HashSet<>();
+        for (Map.Entry<String, NicknameColorGrant> entry : playerGrants.entrySet()) {
+            if (entry.getValue().expired(now)) {
+                expired.add(entry.getKey());
+            }
+        }
+        if (expired.isEmpty()) {
+            return false;
+        }
+        expired.forEach(playerGrants::remove);
+        String selected = selectedColors.get(uuid);
+        if (selected != null && expired.contains(selected)) {
+            selectedColors.remove(uuid);
+        }
+        if (playerGrants.isEmpty()) {
+            grants.remove(uuid);
+        }
+        return true;
+    }
+
+    private boolean removeExpiredGrant(UUID uuid, String id) {
+        Map<String, NicknameColorGrant> playerGrants = grants.get(uuid);
+        if (playerGrants == null) {
+            return false;
+        }
+        NicknameColorGrant grant = playerGrants.get(id);
+        if (grant == null || !grant.expired(System.currentTimeMillis())) {
+            return false;
+        }
+        playerGrants.remove(id);
+        if (id.equals(selectedColors.get(uuid))) {
+            selectedColors.remove(uuid);
+        }
+        if (playerGrants.isEmpty()) {
+            grants.remove(uuid);
+        }
+        return true;
+    }
+
+    private boolean hasColorInternal(UUID uuid, String id, long now) {
+        Map<String, NicknameColorGrant> playerGrants = grants.get(uuid);
+        if (playerGrants == null) {
+            return false;
+        }
+        NicknameColorGrant grant = playerGrants.get(id);
+        return grant != null && !grant.expired(now);
+    }
+
+    private String normalize(String id) {
+        return id == null ? "" : id.toLowerCase(Locale.ROOT);
     }
 
     private void saveIfConfigured() {
