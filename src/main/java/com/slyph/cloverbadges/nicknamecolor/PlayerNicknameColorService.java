@@ -1,6 +1,7 @@
 package com.slyph.cloverbadges.nicknamecolor;
 
 import com.slyph.cloverbadges.CloverBadges;
+import com.slyph.cloverbadges.nicknamecolor.preview.NicknamePreviewService;
 import com.slyph.cloverbadges.nicknamecolor.render.NicknameGradientRenderer;
 import com.slyph.cloverbadges.nicknamecolor.storage.NicknameColorStore;
 import com.slyph.cloverbadges.util.ColorUtil;
@@ -24,14 +25,21 @@ public final class PlayerNicknameColorService {
     private final CloverBadges plugin;
     private final NicknameColorRegistry registry;
     private final NicknameColorStore store;
+    private final NicknamePreviewService previewService;
     private final Map<UUID, String> selectedColors;
     private final Map<UUID, Map<String, NicknameColorGrant>> grants;
     private final Set<UUID> starterInitialized;
 
-    public PlayerNicknameColorService(CloverBadges plugin, NicknameColorRegistry registry, NicknameColorStore store) {
+    public PlayerNicknameColorService(
+            CloverBadges plugin,
+            NicknameColorRegistry registry,
+            NicknameColorStore store,
+            NicknamePreviewService previewService
+    ) {
         this.plugin = plugin;
         this.registry = registry;
         this.store = store;
+        this.previewService = previewService;
         NicknameColorStore.Snapshot snapshot = store.loadAll();
         this.selectedColors = new ConcurrentHashMap<>(snapshot.selectedColors());
         this.grants = new ConcurrentHashMap<>();
@@ -214,6 +222,10 @@ public final class PlayerNicknameColorService {
     }
 
     public String preview(Player player, NicknameColorDefinition definition) {
+        return previewService.render(player, renderNickname(player.getName(), definition));
+    }
+
+    public String nicknamePreview(Player player, NicknameColorDefinition definition) {
         return renderNickname(player.getName(), definition);
     }
 

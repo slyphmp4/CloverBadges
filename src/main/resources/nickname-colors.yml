@@ -1,167 +1,253 @@
-config-version: 2
-
+config-version: 3
 starter:
   enabled: true
-  color-id: "spicy_apple"
+  color-id: spicy_apple
   auto-select: false
-
 colors:
   spicy_apple:
-    name: "&FF3B30Пряное яблоко"
+    name: '&FF3B30Пряное яблоко'
     gradient:
-      - "#FF2D20"
-      - "#FF8A00"
-    permission: ""
+    - '#FF2D20'
+    - '#FF8A00'
+    permission: ''
     priority: 200
   peach_dream:
-    name: "&FFD166Персиковая мечта"
+    name: '&FFD166Персиковая мечта'
     gradient:
-      - "#FFD166"
-      - "#F4A261"
-      - "#FF8FAB"
-    permission: ""
+    - '#FFD166'
+    - '#F4A261'
+    - '#FF8FAB'
+    permission: ''
     priority: 190
   uranium_stick:
-    name: "&20E050Урановая палочка"
+    name: '&20E050Урановая палочка'
     gradient:
-      - "#00D94F"
-      - "#C8FF00"
-    permission: ""
+    - '#00D94F'
+    - '#C8FF00'
+    permission: ''
     priority: 180
   mango:
-    name: "&14B85AМанго"
+    name: '&14B85AМанго'
     gradient:
-      - "#00A63C"
-      - "#FFB12B"
-      - "#FF7B21"
-    permission: ""
+    - '#00A63C'
+    - '#FFB12B'
+    - '#FF7B21'
+    permission: ''
     priority: 170
   mint_sakura:
-    name: "&A4F66AМятная сакура"
+    name: '&A4F66AМятная сакура'
     gradient:
-      - "#9CF26B"
-      - "#D6F59A"
-      - "#F0A6C8"
-    permission: ""
+    - '#9CF26B'
+    - '#D6F59A'
+    - '#F0A6C8'
+    permission: ''
     priority: 160
   forest_berries:
-    name: "&9A55E8Лесные ягоды"
+    name: '&9A55E8Лесные ягоды'
     gradient:
-      - "#8F42D8"
-      - "#C63FAF"
-      - "#F04A9B"
-    permission: ""
+    - '#8F42D8'
+    - '#C63FAF'
+    - '#F04A9B'
+    permission: ''
     priority: 150
   lilac_sunset:
-    name: "&7657FFЛиловый закат"
+    name: '&7657FFЛиловый закат'
     gradient:
-      - "#6657FF"
-      - "#B56DFF"
-      - "#E8D7FF"
-    permission: ""
+    - '#6657FF'
+    - '#B56DFF'
+    - '#E8D7FF'
+    permission: ''
     priority: 140
   peacock_tail:
-    name: "&66FF7EПавлиний хвост"
+    name: '&66FF7EПавлиний хвост'
     gradient:
-      - "#78FF62"
-      - "#24D7B5"
-      - "#4A47FF"
-    permission: ""
+    - '#78FF62'
+    - '#24D7B5'
+    - '#4A47FF'
+    permission: ''
     priority: 130
   fairy_dust:
-    name: "&F1D6FFСказочная пыль"
+    name: '&F1D6FFСказочная пыль'
     gradient:
-      - "#F3E9FF"
-      - "#E2A7F0"
-      - "#FFF1C7"
-    permission: ""
+    - '#F3E9FF'
+    - '#E2A7F0'
+    - '#FFF1C7'
+    permission: ''
     priority: 120
   serenity:
-    name: "&66C6FFБезмятежность"
+    name: '&66C6FFБезмятежность'
     gradient:
-      - "#5CC8FF"
-      - "#B9E8FF"
-      - "#FF9B87"
-    permission: ""
+    - '#5CC8FF'
+    - '#B9E8FF'
+    - '#FF9B87'
+    permission: ''
     priority: 110
   pastel_landscape:
-    name: "&B8F3FFПастельный пейзаж"
+    name: '&B8F3FFПастельный пейзаж'
     gradient:
-      - "#B8F3FF"
-      - "#D6E9F5"
-      - "#F8D8E3"
-    permission: ""
+    - '#B8F3FF'
+    - '#D6E9F5'
+    - '#F8D8E3'
+    permission: ''
     priority: 100
   solar_sorbet:
-    name: "&FFD900Солнечный сорбет"
+    name: '&FFD900Солнечный сорбет'
     gradient:
-      - "#FFD900"
-      - "#FF8A3D"
-      - "#F84ACB"
-    permission: ""
+    - '#FFD900'
+    - '#FF8A3D'
+    - '#F84ACB'
+    permission: ''
     priority: 90
   rising_spring:
-    name: "&FFE1B2Восходящая весна"
+    name: '&FFE1B2Восходящая весна'
     gradient:
-      - "#FFE1B2"
-      - "#A8E8C1"
-      - "#C9B6FF"
-    permission: ""
+    - '#FFE1B2'
+    - '#A8E8C1'
+    - '#C9B6FF'
+    permission: ''
     priority: 80
   edge_city:
-    name: "&C27CFFГород Края"
+    name: '&C27CFFГород Края'
     gradient:
-      - "#C27CFF"
-      - "#E2A8FF"
-      - "#FFF0C8"
-    permission: ""
+    - '#C27CFF'
+    - '#E2A8FF'
+    - '#FFF0C8'
+    permission: ''
     priority: 70
   neon_rainbow:
-    name: "&00D5FFНеоновая радуга"
+    name: '&00D5FFНеоновая радуга'
     gradient:
-      - "#00D5FF"
-      - "#30FF55"
-      - "#FFD600"
-      - "#FF2A2A"
-    permission: ""
+    - '#00D5FF'
+    - '#30FF55'
+    - '#FFD600'
+    - '#FF2A2A'
+    permission: ''
     priority: 60
   prism:
-    name: "&B85CFFПризма"
+    name: '&B85CFFПризма'
     gradient:
-      - "#B85CFF"
-      - "#4DFF7D"
-      - "#FFD93D"
-    permission: ""
+    - '#B85CFF'
+    - '#4DFF7D'
+    - '#FFD93D'
+    permission: ''
     priority: 50
   crimson_mist:
-    name: "&FF4567Малиновый туман"
+    name: '&FF4567Малиновый туман'
     gradient:
-      - "#FF4567"
-      - "#FF7A91"
-      - "#FFB4C4"
-    permission: ""
+    - '#FF4567'
+    - '#FF7A91'
+    - '#FFB4C4'
+    permission: ''
     priority: 40
   aqua_glow:
-    name: "&8CFFF5Аквамариновое сияние"
+    name: '&8CFFF5Аквамариновое сияние'
     gradient:
-      - "#8CFFF5"
-      - "#4CF0EF"
-      - "#6EE7FF"
-    permission: ""
+    - '#8CFFF5'
+    - '#4CF0EF'
+    - '#6EE7FF'
+    permission: ''
     priority: 30
   moonlight:
-    name: "&A7A7A7Лунный свет"
+    name: '&A7A7A7Лунный свет'
     gradient:
-      - "#8F8F8F"
-      - "#CFCFCF"
-      - "#FFFFFF"
-    permission: ""
+    - '#8F8F8F'
+    - '#CFCFCF'
+    - '#FFFFFF'
+    permission: ''
     priority: 20
   starfall:
-    name: "&6E8BFFЗвездопад"
+    name: '&6E8BFFЗвездопад'
     gradient:
-      - "#6E8BFF"
-      - "#E3B7FF"
-      - "#FFF4B0"
-    permission: ""
+    - '#6E8BFF'
+    - '#E3B7FF'
+    - '#FFF4B0'
+    permission: ''
     priority: 10
+  graphite:
+    name: '&E5E5E5Графит'
+    gradient:
+    - '#F3F3F3'
+    - '#9B9B9B'
+    - '#2B2B2B'
+    permission: ''
+    priority: 0
+  lava_lake:
+    name: '&FFB000Лавовое озеро'
+    gradient:
+    - '#FFE100'
+    - '#FFAA00'
+    - '#FF6A00'
+    permission: ''
+    priority: -10
+  berry_cheesecake:
+    name: '&9AB5FFЯгодный чизкейк'
+    gradient:
+    - '#8EA8FF'
+    - '#D59AE6'
+    - '#F4E3B9'
+    permission: ''
+    priority: -20
+  mysterious_twilight:
+    name: '&7CCED6Таинственные сумерки'
+    gradient:
+    - '#7BC8D8'
+    - '#7CD9D0'
+    - '#C4F5E8'
+    permission: ''
+    priority: -30
+  azure_shore:
+    name: '&39D6E9Лазурный берег'
+    gradient:
+    - '#1CCED8'
+    - '#9FEAFF'
+    - '#F7D2A9'
+    permission: ''
+    priority: -40
+  solar_plum:
+    name: '&FF4A92Солнечная слива'
+    gradient:
+    - '#FF2B8A'
+    - '#FF4C59'
+    - '#FFD54A'
+    permission: ''
+    priority: -50
+  storm_cloud:
+    name: '&A6D2FFГрозовая туча'
+    gradient:
+    - '#9BCBFF'
+    - '#BBD7E4'
+    - '#E4ECD7'
+    permission: ''
+    priority: -60
+  citron:
+    name: '&F4F0A8Цитрон'
+    gradient:
+    - '#FFF1B0'
+    - '#E7EDA6'
+    - '#C8C76F'
+    permission: ''
+    priority: -70
+  lemon:
+    name: '&FFF200Лимон'
+    gradient:
+    - '#FFF200'
+    - '#FFF85A'
+    - '#FFE26A'
+    permission: ''
+    priority: -80
+  papaya:
+    name: '&FFB27AПапайя'
+    gradient:
+    - '#FFD0A2'
+    - '#FFAA66'
+    - '#FF7A1A'
+    permission: ''
+    priority: -90
+  lime:
+    name: '&72FF2AЛайм'
+    gradient:
+    - '#72FF2A'
+    - '#97FF33'
+    - '#D8FF5E'
+    permission: ''
+    priority: -100

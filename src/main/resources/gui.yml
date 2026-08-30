@@ -1,7 +1,7 @@
 menu:
   title: '&8Значки'
   size: 54
-  layout-version: 10
+  layout-version: 11
   badge-slots:
   - 20
   - 21
@@ -13,7 +13,6 @@ menu:
   - 31
   - 32
   - 33
-
 nickname-colors:
   title: '&8'
   size: 54
@@ -66,7 +65,6 @@ nickname-colors:
     - ''
     - ' &A3A3A3Здесь появится следующая полученная покраска '
     - '&7'
-
 nickname-color:
   material: PLAYER_HEAD
   amount: 1
@@ -96,7 +94,6 @@ nickname-color:
   - ' &B8B8B8Название: {color_name}'
   - ' &FF6B6B✘ Эта покраска тебе недоступна '
   - '&7'
-
 nickname-color-items:
   spicy_apple:
     material: PLAYER_HEAD
@@ -198,7 +195,61 @@ nickname-color-items:
     head:
       minecraft-heads: ''
       value: ''
-
+  graphite:
+    material: PLAYER_HEAD
+    head:
+      minecraft-heads: ''
+      value: ''
+  lava_lake:
+    material: PLAYER_HEAD
+    head:
+      minecraft-heads: ''
+      value: ''
+  berry_cheesecake:
+    material: PLAYER_HEAD
+    head:
+      minecraft-heads: ''
+      value: ''
+  mysterious_twilight:
+    material: PLAYER_HEAD
+    head:
+      minecraft-heads: ''
+      value: ''
+  azure_shore:
+    material: PLAYER_HEAD
+    head:
+      minecraft-heads: ''
+      value: ''
+  solar_plum:
+    material: PLAYER_HEAD
+    head:
+      minecraft-heads: ''
+      value: ''
+  storm_cloud:
+    material: PLAYER_HEAD
+    head:
+      minecraft-heads: ''
+      value: ''
+  citron:
+    material: PLAYER_HEAD
+    head:
+      minecraft-heads: ''
+      value: ''
+  lemon:
+    material: PLAYER_HEAD
+    head:
+      minecraft-heads: ''
+      value: ''
+  papaya:
+    material: PLAYER_HEAD
+    head:
+      minecraft-heads: ''
+      value: ''
+  lime:
+    material: PLAYER_HEAD
+    head:
+      minecraft-heads: ''
+      value: ''
 page-switcher:
   slot: 4
   material: PLAYER_HEAD
@@ -219,7 +270,6 @@ page-switcher:
     lore:
     - ' &ADADAD← Вернуться к значкам '
     - '&7'
-
 badge:
   head:
     minecraft-heads: ''
@@ -234,7 +284,6 @@ badge:
   actions:
     any:
     - '[toggle]'
-
 badges:
   newcomer:
     material: PLAYER_HEAD
@@ -328,7 +377,6 @@ badges:
     actions:
       any:
       - '[toggle]'
-
 empty-slot:
   material: LIGHT_GRAY_STAINED_GLASS_PANE
   name: '&7'
@@ -337,7 +385,6 @@ empty-slot:
   - ''
   - ' &A3A3A3Здесь появится следующий полученный значок '
   - '&7'
-
 info-book:
   slot: 48
   material: BOOK
@@ -366,7 +413,6 @@ info-book:
   - ' &FF9B7D│ только на ивентах или за помощь'
   - ' &FF9B7D│ в общественных делах сервера.'
   - '&7'
-
 clear-all:
   slot: 50
   material: BARRIER
@@ -377,7 +423,6 @@ clear-all:
   - ' &FF8A8A▪ Чтобы снять все значки, нажмите на '
   - ' &FF8A8A  эту кнопку '
   - '&7'
-
 empty-state:
   size: 45
   paper:

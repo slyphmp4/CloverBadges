@@ -13,6 +13,7 @@ import com.slyph.cloverbadges.listener.PlayerListener;
 import com.slyph.cloverbadges.message.MessageService;
 import com.slyph.cloverbadges.nicknamecolor.NicknameColorRegistry;
 import com.slyph.cloverbadges.nicknamecolor.PlayerNicknameColorService;
+import com.slyph.cloverbadges.nicknamecolor.preview.NicknamePreviewService;
 import com.slyph.cloverbadges.nicknamecolor.storage.NicknameColorStore;
 import com.slyph.cloverbadges.placeholder.CloverBadgesExpansion;
 import com.slyph.cloverbadges.player.PlayerBadgeService;
@@ -44,7 +45,13 @@ public final class CloverBadges extends JavaPlugin {
 
         NicknameColorRegistry nicknameColorRegistry = new NicknameColorRegistry(configManager);
         NicknameColorStore nicknameColorStore = new NicknameColorStore(this);
-        nicknameColorService = new PlayerNicknameColorService(this, nicknameColorRegistry, nicknameColorStore);
+        NicknamePreviewService nicknamePreviewService = new NicknamePreviewService(this, badgeService);
+        nicknameColorService = new PlayerNicknameColorService(
+                this,
+                nicknameColorRegistry,
+                nicknameColorStore,
+                nicknamePreviewService
+        );
 
         customHeadService = new CustomHeadService(this, configManager);
         BadgeActionExecutor actionExecutor = new BadgeActionExecutor(this, badgeService, messageService);

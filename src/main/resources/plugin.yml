@@ -5,6 +5,7 @@ author: slyph
 api-version: '1.16'
 softdepend:
   - PlaceholderAPI
+  - UltraPermissions
 commands:
   badge:
     description: Управление бейджами CloverBadges
