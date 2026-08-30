@@ -314,26 +314,20 @@ public final class CustomHeadService {
     }
 
     private Set<String> collectConfiguredNames() {
-        YamlConfiguration gui = configManager.gui();
         LinkedHashSet<String> result = new LinkedHashSet<>();
-        addConfiguredName(result, gui.getString("badge.head.minecraft-heads"));
-        addConfiguredName(result, gui.getString("badge.head-active.minecraft-heads"));
-        addConfiguredName(result, gui.getString("badge.head-inactive.minecraft-heads"));
-        addConfiguredName(result, gui.getString("page-switcher.head.minecraft-heads"));
-        addConfiguredName(result, gui.getString("page-switcher.badges-page.head.minecraft-heads"));
-        addConfiguredName(result, gui.getString("page-switcher.nickname-colors-page.head.minecraft-heads"));
-
-        ConfigurationSection badges = gui.getConfigurationSection("badges");
-        if (badges == null) {
-            return result;
-        }
-        for (String badgeId : badges.getKeys(false)) {
-            String base = "badges." + badgeId + ".";
-            addConfiguredName(result, gui.getString(base + "head.minecraft-heads"));
-            addConfiguredName(result, gui.getString(base + "head-active.minecraft-heads"));
-            addConfiguredName(result, gui.getString(base + "head-inactive.minecraft-heads"));
-        }
+        collectConfiguredNames(configManager.gui(), result);
         return result;
+    }
+
+    private void collectConfiguredNames(ConfigurationSection section, Collection<String> target) {
+        for (String key : section.getKeys(false)) {
+            Object value = section.get(key);
+            if (value instanceof ConfigurationSection child) {
+                collectConfiguredNames(child, target);
+            } else if (key.equalsIgnoreCase("minecraft-heads") && value instanceof String name) {
+                addConfiguredName(target, name);
+            }
+        }
     }
 
     private void addConfiguredName(Collection<String> target, String value) {
