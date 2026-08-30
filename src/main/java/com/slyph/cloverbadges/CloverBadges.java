@@ -93,10 +93,10 @@ public final class CloverBadges extends JavaPlugin {
             customHeadService.shutdown();
         }
         if (badgeService != null) {
-            badgeService.saveAll();
+            badgeService.flushStorage();
         }
         if (nicknameColorService != null) {
-            nicknameColorService.saveAll();
+            nicknameColorService.flushStorage();
         }
         getServer().getServicesManager().unregisterAll(this);
     }
