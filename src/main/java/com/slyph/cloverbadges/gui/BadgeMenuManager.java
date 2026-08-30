@@ -72,6 +72,19 @@ public final class BadgeMenuManager {
             return;
         }
         if (holder.page() == MenuPage.NICKNAME_COLORS) {
+            int previous = validSlot(configManager.gui().getInt("nickname-colors.pagination.previous.slot", 47), inventory.getSize(), 47);
+            int next = validSlot(configManager.gui().getInt("nickname-colors.pagination.next.slot", 51), inventory.getSize(), 51);
+            int pages = paintPageCount(player, inventory.getSize());
+            if (rawSlot == previous && holder.nicknameColorPage() > 0) {
+                holder.nicknameColorPage(holder.nicknameColorPage() - 1);
+                render(holder, player);
+                return;
+            }
+            if (rawSlot == next && holder.nicknameColorPage() + 1 < pages) {
+                holder.nicknameColorPage(holder.nicknameColorPage() + 1);
+                render(holder, player);
+                return;
+            }
             int clear = validSlot(configManager.gui().getInt("nickname-colors.clear.slot", 49), inventory.getSize(), 49);
             if (rawSlot == clear) {
                 paintService.clear(player);
@@ -151,11 +164,17 @@ public final class BadgeMenuManager {
         List<NicknameColorDefinition> owned = paintService.getOwnedColors(player);
         List<Integer> slots = slots("nickname-colors.color-slots", inventory.getSize());
         String selected = paintService.selectedId(player).orElse("");
-        int visible = Math.min(owned.size(), slots.size());
+        int pageSize = Math.max(1, slots.size());
+        int pages = Math.max(1, (owned.size() + pageSize - 1) / pageSize);
+        int page = Math.min(holder.nicknameColorPage(), pages - 1);
+        holder.nicknameColorPage(page);
+        int offset = page * pageSize;
+
         for (int index = 0; index < slots.size(); index++) {
             int slot = slots.get(index);
-            if (index < visible) {
-                NicknameColorDefinition definition = owned.get(index);
+            int paintIndex = offset + index;
+            if (paintIndex < owned.size()) {
+                NicknameColorDefinition definition = owned.get(paintIndex);
                 boolean selectedNow = definition.id().equals(selected);
                 boolean available = paintService.isAvailable(player, definition);
                 inventory.setItem(slot, paintItem(player, definition, selectedNow, available));
@@ -164,8 +183,44 @@ public final class BadgeMenuManager {
                 inventory.setItem(slot, configuredItem("nickname-colors.empty-slot", player, null, owned.size(), selected.isEmpty() ? 0 : 1, Material.LIGHT_GRAY_STAINED_GLASS_PANE));
             }
         }
+
         int clear = validSlot(configManager.gui().getInt("nickname-colors.clear.slot", 49), inventory.getSize(), 49);
         inventory.setItem(clear, configuredItem("nickname-colors.clear", player, null, owned.size(), selected.isEmpty() ? 0 : 1, Material.GRAY_DYE));
+
+        if (page > 0) {
+            int previous = validSlot(configManager.gui().getInt("nickname-colors.pagination.previous.slot", 47), inventory.getSize(), 47);
+            inventory.setItem(previous, paginationItem("nickname-colors.pagination.previous", player, page, pages, Material.ARROW));
+        }
+        if (page + 1 < pages) {
+            int next = validSlot(configManager.gui().getInt("nickname-colors.pagination.next.slot", 51), inventory.getSize(), 51);
+            inventory.setItem(next, paginationItem("nickname-colors.pagination.next", player, page, pages, Material.ARROW));
+        }
+    }
+
+    private int paintPageCount(Player player, int inventorySize) {
+        int pageSize = Math.max(1, slots("nickname-colors.color-slots", inventorySize).size());
+        int owned = paintService.getOwnedColors(player).size();
+        return Math.max(1, (owned + pageSize - 1) / pageSize);
+    }
+
+    private ItemStack paginationItem(String path, Player player, int page, int pages, Material fallback) {
+        YamlConfiguration gui = configManager.gui();
+        Material material = material(gui.getString(path + ".material", fallback.name()), fallback);
+        ItemStack item = new ItemStack(material);
+        item.setAmount(Math.max(1, Math.min(material.getMaxStackSize(), gui.getInt(path + ".amount", 1))));
+        ItemMeta meta = item.getItemMeta();
+        if (material == Material.PLAYER_HEAD) {
+            customHeadService.apply(meta, gui.getString(path + ".head.minecraft-heads", ""), gui.getString(path + ".head.value", ""));
+        }
+        Function<String, String> replacer = value -> paginationPlaceholders(placeholders(value, player, null, paintService.getOwnedColorIds(player).size(), paintService.selectedId(player).isPresent() ? 1 : 0), page, pages);
+        meta.displayName(guiText(replacer.apply(gui.getString(path + ".name", "&7"))));
+        List<Component> lore = new ArrayList<>();
+        for (String line : gui.getStringList(path + ".lore")) {
+            lore.add(guiText(replacer.apply(line)));
+        }
+        meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
     }
 
     private ItemStack badgeItem(Player player, String id, boolean active, int owned, int activeCount) {
@@ -351,6 +406,14 @@ public final class BadgeMenuManager {
         String current = page == MenuPage.BADGES ? "Значки" : "Покраски никнеймов";
         String target = page == MenuPage.BADGES ? "Покраски никнеймов" : "Значки";
         return (input == null ? "" : input).replace("{page}", current).replace("{target_page}", target);
+    }
+
+    private String paginationPlaceholders(String input, int page, int pages) {
+        return (input == null ? "" : input)
+                .replace("{page}", Integer.toString(page + 1))
+                .replace("{pages}", Integer.toString(pages))
+                .replace("{previous_page}", Integer.toString(Math.max(1, page)))
+                .replace("{next_page}", Integer.toString(Math.min(pages, page + 2)));
     }
 
     private List<Integer> slots(String path, int inventorySize) {
