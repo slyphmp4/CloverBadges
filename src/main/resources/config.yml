@@ -11,6 +11,27 @@ display:
   max-badges: 2
   separator: " "
 
+nametag:
+  enabled: true
+  only-for-gradients: true
+  renderer: "AUTO"
+  hide-vanilla-with-tab: true
+  use-tab-prefix-suffix: true
+  armor-stand-fallback: true
+  refresh-interval-ticks: 10
+  text-display:
+    shadowed: true
+    see-through: false
+    default-background: false
+    line-width: 1024
+    view-range: 1.0
+  armor-stand:
+    y-offset: 1.0
+  fallback:
+    prefix: ""
+    suffix: ""
+    badge-separator: " "
+
 limits:
   max-owned-badges: 10
 
