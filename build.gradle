@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'com.slyph'
-version = '1.12.2'
+version = '1.13.0'
 
 repositories {
     mavenCentral()
@@ -15,11 +15,16 @@ repositories {
         name = 'placeholderapi'
         url = 'https://repo.extendedclip.com/releases/'
     }
+    maven {
+        name = 'jitpack'
+        url = 'https://jitpack.io'
+    }
 }
 
 dependencies {
     compileOnly 'io.papermc.paper:paper-api:26.2.build.110-stable'
     compileOnly 'me.clip:placeholderapi:2.12.3'
+    compileOnly 'com.github.NEZNAMY:TAB-API:6.1.2'
 }
 
 java {
