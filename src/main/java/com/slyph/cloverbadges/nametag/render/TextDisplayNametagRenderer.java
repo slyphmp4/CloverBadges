@@ -53,7 +53,7 @@ public final class TextDisplayNametagRenderer extends AbstractNametagRenderer {
             if (!owner.addPassenger(display)) {
                 throw new IllegalStateException("Unable to attach TextDisplay to player");
             }
-        } catch (Throwable throwable) {
+        } catch (RuntimeException | Error throwable) {
             display.remove();
             throw throwable;
         }
