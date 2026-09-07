@@ -1,0 +1,164 @@
+config-version: 1
+preview-text: 'Пример сообщения'
+colors:
+  cotton_candy:
+    name: '&FFB7D5Сахарная вата'
+    gradient:
+    - '#FFB7D5'
+    - '#D8C4FF'
+    - '#BDE0FE'
+    permission: ''
+    priority: 200
+  apricot_cloud:
+    name: '&FFC6A8Абрикосовое облако'
+    gradient:
+    - '#FFC6A8'
+    - '#FFE4C7'
+    - '#FFB5C2'
+    permission: ''
+    priority: 190
+  frozen_lilac:
+    name: '&B8C0FFЗамёрзшая сирень'
+    gradient:
+    - '#B8C0FF'
+    - '#D8B4FE'
+    - '#F5D0FE'
+    permission: ''
+    priority: 180
+  mint_cream:
+    name: '&9FE7D7Мятный крем'
+    gradient:
+    - '#9FE7D7'
+    - '#D7F9E9'
+    - '#FFF1C7'
+    permission: ''
+    priority: 170
+  sunset_milk:
+    name: '&FF9A8BМолочный закат'
+    gradient:
+    - '#FF9A8B'
+    - '#FFD6A5'
+    - '#FFF0D6'
+    permission: ''
+    priority: 160
+  electric_peach:
+    name: '&FF5E8AЭлектрический персик'
+    gradient:
+    - '#FF5E8A'
+    - '#FF8E53'
+    - '#FFD166'
+    permission: ''
+    priority: 150
+  cyber_mint:
+    name: '&00F5D4Кибер-мята'
+    gradient:
+    - '#00F5D4'
+    - '#00BBF9'
+    - '#9B5DE5'
+    permission: ''
+    priority: 140
+  orchid_flash:
+    name: '&D04CFFОрхидейная вспышка'
+    gradient:
+    - '#B517FF'
+    - '#F72585'
+    - '#FF8FA3'
+    permission: ''
+    priority: 130
+  acid_sky:
+    name: '&7CFFCBКислотное небо'
+    gradient:
+    - '#7CFFCB'
+    - '#4D96FF'
+    - '#845EC2'
+    permission: ''
+    priority: 120
+  polar_light:
+    name: '&7DF9FFПолярное свечение'
+    gradient:
+    - '#7DF9FF'
+    - '#A5FFD6'
+    - '#E2C2FF'
+    permission: ''
+    priority: 110
+  cherry_soda:
+    name: '&FF477EВишнёвая газировка'
+    gradient:
+    - '#FF477E'
+    - '#FF7096'
+    - '#FFD6E0'
+    permission: ''
+    priority: 100
+  cosmic_ice:
+    name: '&4CC9F0Космический лёд'
+    gradient:
+    - '#4CC9F0'
+    - '#4361EE'
+    - '#7209B7'
+    permission: ''
+    priority: 90
+  honey_lavender:
+    name: '&FFC857Медовая лаванда'
+    gradient:
+    - '#FFC857'
+    - '#D8B4FE'
+    - '#B8C0FF'
+    permission: ''
+    priority: 80
+  sea_glass:
+    name: '&76E5FCМорское стекло'
+    gradient:
+    - '#76E5FC'
+    - '#A3F7BF'
+    - '#E6FFB7'
+    permission: ''
+    priority: 70
+  velvet_dusk:
+    name: '&C77DFFБархатные сумерки'
+    gradient:
+    - '#7B2CBF'
+    - '#C77DFF'
+    - '#FFB3C6'
+    permission: ''
+    priority: 60
+  neon_melon:
+    name: '&39FF88Неоновая дыня'
+    gradient:
+    - '#39FF88'
+    - '#F9F871'
+    - '#FF8C42'
+    permission: ''
+    priority: 50
+  rose_quartz:
+    name: '&F7CAC9Розовый кварц'
+    gradient:
+    - '#F7CAC9'
+    - '#E6C9FF'
+    - '#CDE7FF'
+    permission: ''
+    priority: 40
+  blue_hour:
+    name: '&6C5B7BСиний час'
+    gradient:
+    - '#355C7D'
+    - '#6C5B7B'
+    - '#C06C84'
+    permission: ''
+    priority: 30
+  aurora_coral:
+    name: '&00C9A7Коралловая аврора'
+    gradient:
+    - '#00C9A7'
+    - '#92FE9D'
+    - '#FF9671'
+    permission: ''
+    priority: 20
+  pixel_sherbet:
+    name: '&FF6FD8Пиксельный щербет'
+    gradient:
+    - '#FF6FD8'
+    - '#C471F5'
+    - '#12C2E9'
+    - '#F6D365'
+    permission: ''
+    priority: 10
