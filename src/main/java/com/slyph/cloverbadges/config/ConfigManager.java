@@ -235,6 +235,16 @@ public final class ConfigManager {
         }
         if (layoutVersion < 11) {
             configuration.set("menu.layout-version", 11);
+            layoutVersion = 11;
+        }
+        if (layoutVersion < 12) {
+            if (configuration.getInt("page-switcher.slot", 4) == 4) {
+                configuration.set("page-switcher.slot", 3);
+            }
+            if (!configuration.contains("message-colors-switcher.slot")) {
+                configuration.set("message-colors-switcher.slot", 5);
+            }
+            configuration.set("menu.layout-version", 12);
         }
     }
 
