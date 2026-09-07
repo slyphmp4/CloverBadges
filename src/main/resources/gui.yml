@@ -1,7 +1,7 @@
 menu:
   title: '&8Значки'
   size: 54
-  layout-version: 12
+  layout-version: 13
   badge-slots:
   - 20
   - 21
@@ -250,6 +250,125 @@ nickname-color-items:
     head:
       minecraft-heads: ''
       value: ''
+message-colors:
+  title: '&8'
+  size: 54
+  color-slots:
+  - 20
+  - 21
+  - 22
+  - 23
+  - 24
+  - 29
+  - 30
+  - 31
+  - 32
+  - 33
+  pagination:
+    previous:
+      slot: 47
+      material: ARROW
+      amount: 1
+      name: '&7'
+      lore:
+      - ' &ADADAD← Предыдущая страница '
+      - '&7'
+      - ' &787878Страница {previous_page} из {pages} '
+      - '&7'
+    next:
+      slot: 51
+      material: ARROW
+      amount: 1
+      name: '&7'
+      lore:
+      - ' &ADADAD→ Следующая страница '
+      - '&7'
+      - ' &787878Страница {next_page} из {pages} '
+      - '&7'
+  clear:
+    slot: 49
+    material: GRAY_DYE
+    name: '&7'
+    lore:
+    - ' &B8B8B8✘ — Обычный цвет сообщений '
+    - '&7'
+    - ' &878787⏏ Нажми, чтобы убрать покраску '
+    - '&7'
+  empty-slot:
+    material: LIGHT_GRAY_STAINED_GLASS_PANE
+    name: '&7'
+    lore:
+    - ' &C4C4C4◇ Пусто...'
+    - ''
+    - ' &A3A3A3Здесь появится следующая полученная покраска сообщений '
+    - '&7'
+message-color:
+  material: PAPER
+  amount: 1
+  name: '&7'
+  lore-selected:
+  - ' {preview} &A6A6A6(выбрано) '
+  - '&7'
+  - ' &B8B8B8Название: {color_name}'
+  - ' &B8B8B8Осталось: &FFFFFF{remaining}'
+  - '&7'
+  - ' &86E96E✔ Эта покраска сообщений сейчас используется '
+  - '&7'
+  lore-available:
+  - ' {preview} '
+  - '&7'
+  - ' &B8B8B8Название: {color_name}'
+  - ' &B8B8B8Осталось: &FFFFFF{remaining}'
+  - '&7'
+  - ' &878787⏏ Нажми, чтобы выбрать покраску сообщений '
+  - '&7'
+  lore-locked:
+  - ' {preview} '
+  - '&7'
+  - ' &B8B8B8Название: {color_name}'
+  - ' &FF6B6B✘ Эта покраска сообщений тебе недоступна '
+  - '&7'
+message-color-items:
+  cotton_candy:
+    material: PINK_DYE
+  apricot_cloud:
+    material: ORANGE_DYE
+  frozen_lilac:
+    material: PURPLE_DYE
+  mint_cream:
+    material: LIME_DYE
+  sunset_milk:
+    material: MAGENTA_DYE
+  electric_peach:
+    material: RED_DYE
+  cyber_mint:
+    material: CYAN_DYE
+  orchid_flash:
+    material: MAGENTA_DYE
+  acid_sky:
+    material: LIGHT_BLUE_DYE
+  polar_light:
+    material: GLOW_INK_SAC
+  cherry_soda:
+    material: PINK_DYE
+  cosmic_ice:
+    material: LAPIS_LAZULI
+  honey_lavender:
+    material: HONEYCOMB
+  sea_glass:
+    material: PRISMARINE_CRYSTALS
+  velvet_dusk:
+    material: AMETHYST_SHARD
+  neon_melon:
+    material: LIME_DYE
+  rose_quartz:
+    material: QUARTZ
+  blue_hour:
+    material: BLUE_DYE
+  aurora_coral:
+    material: HEART_OF_THE_SEA
+  pixel_sherbet:
+    material: GLOWSTONE_DUST
 page-switcher:
   slot: 3
   material: PLAYER_HEAD
@@ -279,8 +398,17 @@ message-colors-switcher:
     value: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYjQ4Y2UxY2YxOGFmMDVhNTc2ZDYwODEyMzAwMWI3OTFmZWRiNjIyOTExZWY4ZDM4YTMyMGRhM2JjYmY2ZmQyMCJ9fX0=
   name: '&7'
   lore:
-  - ' &ADADADПокраска сообщений '
   - '&7'
+  - '&FFFFFFОткрыть: &B8B8B8{target_page}'
+  - '&7'
+  other-page:
+    lore:
+    - ' &ADADAD→ Перейти к покраскам сообщений '
+    - '&7'
+  message-colors-page:
+    lore:
+    - ' &ADADAD← Вернуться к значкам '
+    - '&7'
 badge:
   head:
     minecraft-heads: ''
