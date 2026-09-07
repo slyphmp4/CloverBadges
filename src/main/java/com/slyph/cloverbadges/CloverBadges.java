@@ -11,6 +11,8 @@ import com.slyph.cloverbadges.gui.action.BadgeActionExecutor;
 import com.slyph.cloverbadges.head.CustomHeadService;
 import com.slyph.cloverbadges.listener.PlayerListener;
 import com.slyph.cloverbadges.message.MessageService;
+import com.slyph.cloverbadges.nametag.NametagService;
+import com.slyph.cloverbadges.nametag.integration.TabNametagBridge;
 import com.slyph.cloverbadges.nicknamecolor.NicknameColorRegistry;
 import com.slyph.cloverbadges.nicknamecolor.PlayerNicknameColorService;
 import com.slyph.cloverbadges.nicknamecolor.preview.NicknamePreviewService;
@@ -32,6 +34,7 @@ public final class CloverBadges extends JavaPlugin {
     private PlayerBadgeService badgeService;
     private PlayerNicknameColorService nicknameColorService;
     private CustomHeadService customHeadService;
+    private NametagService nametagService;
     private CloverBadgesExpansion expansion;
     private BukkitTask cleanupTask;
 
@@ -53,6 +56,9 @@ public final class CloverBadges extends JavaPlugin {
                 nicknamePreviewService
         );
 
+        TabNametagBridge tabNametagBridge = createTabNametagBridge();
+        nametagService = new NametagService(this, badgeService, nicknameColorService, tabNametagBridge);
+
         customHeadService = new CustomHeadService(this, configManager);
         BadgeActionExecutor actionExecutor = new BadgeActionExecutor(this, badgeService, messageService);
         BadgeMenuManager menuManager = new BadgeMenuManager(
@@ -67,7 +73,7 @@ public final class CloverBadges extends JavaPlugin {
         badgeCommand.setExecutor(new BadgeCommand(this, badgeService, nicknameColorService, messageService, menuManager));
         badgeCommand.setTabCompleter(new BadgeTabCompleter(badgeService, nicknameColorService));
 
-        getServer().getPluginManager().registerEvents(new PlayerListener(badgeService, nicknameColorService), this);
+        getServer().getPluginManager().registerEvents(new PlayerListener(badgeService, nicknameColorService, nametagService), this);
         getServer().getPluginManager().registerEvents(new BadgeMenuListener(menuManager), this);
         getServer().getServicesManager().register(BadgeApi.class, badgeService, this, ServicePriority.Normal);
 
@@ -77,6 +83,7 @@ public final class CloverBadges extends JavaPlugin {
         }
 
         customHeadService.reload();
+        nametagService.start();
         scheduleCleanup();
         getLogger().info("CloverBadges v" + getPluginMeta().getVersion() + " enabled");
     }
@@ -85,6 +92,9 @@ public final class CloverBadges extends JavaPlugin {
     public void onDisable() {
         if (cleanupTask != null) {
             cleanupTask.cancel();
+        }
+        if (nametagService != null) {
+            nametagService.shutdown();
         }
         if (expansion != null) {
             expansion.unregister();
@@ -106,7 +116,20 @@ public final class CloverBadges extends JavaPlugin {
         badgeRegistry.reload();
         nicknameColorService.reload();
         customHeadService.reload();
+        nametagService.reload();
         scheduleCleanup();
+    }
+
+    private TabNametagBridge createTabNametagBridge() {
+        if (!getServer().getPluginManager().isPluginEnabled("TAB")) {
+            return null;
+        }
+        try {
+            return new TabNametagBridge();
+        } catch (Throwable throwable) {
+            getLogger().warning("TAB API is unavailable for gradient nametags: " + throwable.getClass().getSimpleName());
+            return null;
+        }
     }
 
     private void scheduleCleanup() {
