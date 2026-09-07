@@ -3,6 +3,8 @@ package com.slyph.cloverbadges.gui;
 import com.slyph.cloverbadges.config.ConfigManager;
 import com.slyph.cloverbadges.gui.action.BadgeActionExecutor;
 import com.slyph.cloverbadges.head.CustomHeadService;
+import com.slyph.cloverbadges.messagecolor.MessageColorDefinition;
+import com.slyph.cloverbadges.messagecolor.PlayerMessageColorService;
 import com.slyph.cloverbadges.nicknamecolor.NicknameColorDefinition;
 import com.slyph.cloverbadges.nicknamecolor.PlayerNicknameColorService;
 import com.slyph.cloverbadges.player.PlayerBadgeService;
@@ -32,13 +34,22 @@ public final class BadgeMenuManager {
     private final ConfigManager configManager;
     private final PlayerBadgeService badgeService;
     private final PlayerNicknameColorService paintService;
+    private final PlayerMessageColorService messageColorService;
     private final BadgeActionExecutor actionExecutor;
     private final CustomHeadService customHeadService;
 
-    public BadgeMenuManager(ConfigManager configManager, PlayerBadgeService badgeService, PlayerNicknameColorService paintService, BadgeActionExecutor actionExecutor, CustomHeadService customHeadService) {
+    public BadgeMenuManager(
+            ConfigManager configManager,
+            PlayerBadgeService badgeService,
+            PlayerNicknameColorService paintService,
+            PlayerMessageColorService messageColorService,
+            BadgeActionExecutor actionExecutor,
+            CustomHeadService customHeadService
+    ) {
         this.configManager = configManager;
         this.badgeService = badgeService;
         this.paintService = paintService;
+        this.messageColorService = messageColorService;
         this.actionExecutor = actionExecutor;
         this.customHeadService = customHeadService;
     }
@@ -50,10 +61,29 @@ public final class BadgeMenuManager {
     private void open(Player player, MenuPage page) {
         int badgeCount = badgeService.getOwnedBadgeIds(player).size();
         int activeCount = badgeService.getActiveBadgeIds(player).size();
-        int size = page == MenuPage.BADGES ? badgeInventorySize(badgeCount == 0) : inventorySize("nickname-colors.size", 54);
-        String titlePath = page == MenuPage.BADGES ? "menu.title" : "nickname-colors.title";
-        String fallback = page == MenuPage.BADGES ? "&8Значки" : "&8";
-        String title = pagePlaceholders(placeholders(configManager.gui().getString(titlePath, fallback), player, null, badgeCount, activeCount), page);
+        int size;
+        String titlePath;
+        String fallback;
+
+        if (page == MenuPage.BADGES) {
+            size = badgeInventorySize(badgeCount == 0);
+            titlePath = "menu.title";
+            fallback = "&8Значки";
+        } else if (page == MenuPage.NICKNAME_COLORS) {
+            size = inventorySize("nickname-colors.size", 54);
+            titlePath = "nickname-colors.title";
+            fallback = "&8Покраски никнейма";
+        } else {
+            size = inventorySize("message-colors.size", 54);
+            titlePath = "message-colors.title";
+            fallback = "&8Покраски сообщений";
+        }
+
+        String title = navigationPlaceholders(
+                placeholders(configManager.gui().getString(titlePath, fallback), player, null, badgeCount, activeCount),
+                page,
+                page
+        );
         BadgeMenuHolder holder = new BadgeMenuHolder(player.getUniqueId(), page);
         Inventory inventory = Bukkit.createInventory(holder, size, ColorUtil.legacySection(title));
         holder.inventory(inventory);
@@ -65,48 +95,101 @@ public final class BadgeMenuManager {
         if (!holder.playerId().equals(player.getUniqueId()) || holder.getInventory() == null) {
             return;
         }
+
         Inventory inventory = holder.getInventory();
-        int switcher = validSlot(configManager.gui().getInt("page-switcher.slot", 3), inventory.getSize(), 3);
-        if (rawSlot == switcher) {
-            open(player, holder.page().opposite());
+        int nicknameSwitcher = validSlot(configManager.gui().getInt("page-switcher.slot", 3), inventory.getSize(), 3);
+        if (rawSlot == nicknameSwitcher) {
+            open(player, holder.page().nicknameTarget());
             return;
         }
-        int messageColorsSwitcher = validSlot(configManager.gui().getInt("message-colors-switcher.slot", 5), inventory.getSize(), 5);
-        if (rawSlot == messageColorsSwitcher) {
+
+        int messageSwitcher = validSlot(configManager.gui().getInt("message-colors-switcher.slot", 5), inventory.getSize(), 5);
+        if (rawSlot == messageSwitcher) {
+            open(player, holder.page().messageTarget());
             return;
         }
+
         if (holder.page() == MenuPage.NICKNAME_COLORS) {
-            int previous = validSlot(configManager.gui().getInt("nickname-colors.pagination.previous.slot", 47), inventory.getSize(), 47);
-            int next = validSlot(configManager.gui().getInt("nickname-colors.pagination.next.slot", 51), inventory.getSize(), 51);
-            int pages = paintPageCount(player, inventory.getSize());
-            if (rawSlot == previous && holder.nicknameColorPage() > 0) {
-                holder.nicknameColorPage(holder.nicknameColorPage() - 1);
-                render(holder, player);
-                return;
-            }
-            if (rawSlot == next && holder.nicknameColorPage() + 1 < pages) {
-                holder.nicknameColorPage(holder.nicknameColorPage() + 1);
-                render(holder, player);
-                return;
-            }
-            int clear = validSlot(configManager.gui().getInt("nickname-colors.clear.slot", 49), inventory.getSize(), 49);
-            if (rawSlot == clear) {
-                paintService.clear(player);
-                render(holder, player);
-                return;
-            }
-            String paintId = holder.nicknameColorAt(rawSlot);
-            if (paintId != null && paintService.select(player, paintId)) {
-                render(holder, player);
-            }
+            handleNicknameColorClick(player, holder, rawSlot);
             return;
         }
+        if (holder.page() == MenuPage.MESSAGE_COLORS) {
+            handleMessageColorClick(player, holder, rawSlot);
+            return;
+        }
+
+        handleBadgeClick(player, holder, rawSlot, clickType);
+    }
+
+    private void handleNicknameColorClick(Player player, BadgeMenuHolder holder, int rawSlot) {
+        Inventory inventory = holder.getInventory();
+        int previous = validSlot(configManager.gui().getInt("nickname-colors.pagination.previous.slot", 47), inventory.getSize(), 47);
+        int next = validSlot(configManager.gui().getInt("nickname-colors.pagination.next.slot", 51), inventory.getSize(), 51);
+        int pages = nicknameColorPageCount(player, inventory.getSize());
+
+        if (rawSlot == previous && holder.nicknameColorPage() > 0) {
+            holder.nicknameColorPage(holder.nicknameColorPage() - 1);
+            render(holder, player);
+            return;
+        }
+        if (rawSlot == next && holder.nicknameColorPage() + 1 < pages) {
+            holder.nicknameColorPage(holder.nicknameColorPage() + 1);
+            render(holder, player);
+            return;
+        }
+
+        int clear = validSlot(configManager.gui().getInt("nickname-colors.clear.slot", 49), inventory.getSize(), 49);
+        if (rawSlot == clear) {
+            paintService.clear(player);
+            render(holder, player);
+            return;
+        }
+
+        String paintId = holder.nicknameColorAt(rawSlot);
+        if (paintId != null && paintService.select(player, paintId)) {
+            render(holder, player);
+        }
+    }
+
+    private void handleMessageColorClick(Player player, BadgeMenuHolder holder, int rawSlot) {
+        Inventory inventory = holder.getInventory();
+        int previous = validSlot(configManager.gui().getInt("message-colors.pagination.previous.slot", 47), inventory.getSize(), 47);
+        int next = validSlot(configManager.gui().getInt("message-colors.pagination.next.slot", 51), inventory.getSize(), 51);
+        int pages = messageColorPageCount(player, inventory.getSize());
+
+        if (rawSlot == previous && holder.messageColorPage() > 0) {
+            holder.messageColorPage(holder.messageColorPage() - 1);
+            render(holder, player);
+            return;
+        }
+        if (rawSlot == next && holder.messageColorPage() + 1 < pages) {
+            holder.messageColorPage(holder.messageColorPage() + 1);
+            render(holder, player);
+            return;
+        }
+
+        int clear = validSlot(configManager.gui().getInt("message-colors.clear.slot", 49), inventory.getSize(), 49);
+        if (rawSlot == clear) {
+            messageColorService.clear(player);
+            render(holder, player);
+            return;
+        }
+
+        String colorId = holder.messageColorAt(rawSlot);
+        if (colorId != null && messageColorService.select(player, colorId)) {
+            render(holder, player);
+        }
+    }
+
+    private void handleBadgeClick(Player player, BadgeMenuHolder holder, int rawSlot, ClickType clickType) {
+        Inventory inventory = holder.getInventory();
         int clear = validSlot(configManager.gui().getInt("clear-all.slot", 50), inventory.getSize(), 50);
         if (rawSlot == clear && !badgeService.getOwnedBadgeIds(player).isEmpty()) {
             badgeService.clearSelection(player);
             render(holder, player);
             return;
         }
+
         String badgeId = holder.badgeAt(rawSlot);
         if (badgeId == null) {
             return;
@@ -114,7 +197,12 @@ public final class BadgeMenuManager {
         int owned = badgeService.getOwnedBadgeIds(player).size();
         int active = badgeService.getActiveBadgeIds(player).size();
         boolean enabled = badgeService.getActiveBadgeIds(player).contains(badgeId);
-        BadgeActionExecutor.Result result = actionExecutor.execute(player, badgeId, badgeActions(badgeId, enabled, clickType), value -> placeholders(value, player, badgeId, owned, active));
+        BadgeActionExecutor.Result result = actionExecutor.execute(
+                player,
+                badgeId,
+                badgeActions(badgeId, enabled, clickType),
+                value -> placeholders(value, player, badgeId, owned, active)
+        );
         if (result.close()) {
             player.closeInventory();
         } else if (result.refresh()) {
@@ -131,10 +219,13 @@ public final class BadgeMenuManager {
         holder.clearSlots();
         int owned = badgeService.getOwnedBadgeIds(player).size();
         int active = badgeService.getActiveBadgeIds(player).size();
-        renderSwitcher(inventory, player, holder.page(), owned, active);
-        renderMessageColorsSwitcher(inventory, player, owned, active);
+        renderNicknameSwitcher(inventory, player, holder.page(), owned, active);
+        renderMessageColorsSwitcher(inventory, player, holder.page(), owned, active);
+
         if (holder.page() == MenuPage.NICKNAME_COLORS) {
-            renderPaints(holder, player);
+            renderNicknameColors(holder, player);
+        } else if (holder.page() == MenuPage.MESSAGE_COLORS) {
+            renderMessageColors(holder, player);
         } else {
             renderBadges(holder, player);
         }
@@ -160,11 +251,17 @@ public final class BadgeMenuManager {
                 inventory.setItem(slot, configuredItem("empty-slot", player, null, owned.size(), active.size(), Material.LIGHT_GRAY_STAINED_GLASS_PANE));
             }
         }
-        inventory.setItem(validSlot(configManager.gui().getInt("info-book.slot", 48), inventory.getSize(), 48), configuredItem("info-book", player, null, owned.size(), active.size(), Material.BOOK));
-        inventory.setItem(validSlot(configManager.gui().getInt("clear-all.slot", 50), inventory.getSize(), 50), configuredItem("clear-all", player, null, owned.size(), active.size(), Material.BARRIER));
+        inventory.setItem(
+                validSlot(configManager.gui().getInt("info-book.slot", 48), inventory.getSize(), 48),
+                configuredItem("info-book", player, null, owned.size(), active.size(), Material.BOOK)
+        );
+        inventory.setItem(
+                validSlot(configManager.gui().getInt("clear-all.slot", 50), inventory.getSize(), 50),
+                configuredItem("clear-all", player, null, owned.size(), active.size(), Material.BARRIER)
+        );
     }
 
-    private void renderPaints(BadgeMenuHolder holder, Player player) {
+    private void renderNicknameColors(BadgeMenuHolder holder, Player player) {
         Inventory inventory = holder.getInventory();
         List<NicknameColorDefinition> owned = paintService.getOwnedColors(player);
         List<Integer> slots = slots("nickname-colors.color-slots", inventory.getSize());
@@ -182,33 +279,89 @@ public final class BadgeMenuManager {
                 NicknameColorDefinition definition = owned.get(paintIndex);
                 boolean selectedNow = definition.id().equals(selected);
                 boolean available = paintService.isAvailable(player, definition);
-                inventory.setItem(slot, paintItem(player, definition, selectedNow, available));
+                inventory.setItem(slot, nicknameColorItem(player, definition, selectedNow, available));
                 holder.nicknameColorSlot(slot, definition.id());
             } else {
-                inventory.setItem(slot, configuredItem("nickname-colors.empty-slot", player, null, owned.size(), selected.isEmpty() ? 0 : 1, Material.LIGHT_GRAY_STAINED_GLASS_PANE));
+                inventory.setItem(
+                        slot,
+                        configuredItem("nickname-colors.empty-slot", player, null, owned.size(), selected.isEmpty() ? 0 : 1, Material.LIGHT_GRAY_STAINED_GLASS_PANE)
+                );
             }
         }
 
         int clear = validSlot(configManager.gui().getInt("nickname-colors.clear.slot", 49), inventory.getSize(), 49);
-        inventory.setItem(clear, configuredItem("nickname-colors.clear", player, null, owned.size(), selected.isEmpty() ? 0 : 1, Material.GRAY_DYE));
+        inventory.setItem(
+                clear,
+                configuredItem("nickname-colors.clear", player, null, owned.size(), selected.isEmpty() ? 0 : 1, Material.GRAY_DYE)
+        );
 
         if (page > 0) {
             int previous = validSlot(configManager.gui().getInt("nickname-colors.pagination.previous.slot", 47), inventory.getSize(), 47);
-            inventory.setItem(previous, paginationItem("nickname-colors.pagination.previous", player, page, pages, Material.ARROW));
+            inventory.setItem(previous, paginationItem("nickname-colors.pagination.previous", player, page, pages, owned.size(), selected.isEmpty() ? 0 : 1, Material.ARROW));
         }
         if (page + 1 < pages) {
             int next = validSlot(configManager.gui().getInt("nickname-colors.pagination.next.slot", 51), inventory.getSize(), 51);
-            inventory.setItem(next, paginationItem("nickname-colors.pagination.next", player, page, pages, Material.ARROW));
+            inventory.setItem(next, paginationItem("nickname-colors.pagination.next", player, page, pages, owned.size(), selected.isEmpty() ? 0 : 1, Material.ARROW));
         }
     }
 
-    private int paintPageCount(Player player, int inventorySize) {
+    private void renderMessageColors(BadgeMenuHolder holder, Player player) {
+        Inventory inventory = holder.getInventory();
+        List<MessageColorDefinition> owned = messageColorService.getOwnedColors(player);
+        List<Integer> slots = slots("message-colors.color-slots", inventory.getSize());
+        String selected = messageColorService.selectedId(player).orElse("");
+        int pageSize = Math.max(1, slots.size());
+        int pages = Math.max(1, (owned.size() + pageSize - 1) / pageSize);
+        int page = Math.min(holder.messageColorPage(), pages - 1);
+        holder.messageColorPage(page);
+        int offset = page * pageSize;
+
+        for (int index = 0; index < slots.size(); index++) {
+            int slot = slots.get(index);
+            int colorIndex = offset + index;
+            if (colorIndex < owned.size()) {
+                MessageColorDefinition definition = owned.get(colorIndex);
+                boolean selectedNow = definition.id().equals(selected);
+                boolean available = messageColorService.isAvailable(player, definition);
+                inventory.setItem(slot, messageColorItem(player, definition, selectedNow, available));
+                holder.messageColorSlot(slot, definition.id());
+            } else {
+                inventory.setItem(
+                        slot,
+                        configuredItem("message-colors.empty-slot", player, null, owned.size(), selected.isEmpty() ? 0 : 1, Material.LIGHT_GRAY_STAINED_GLASS_PANE)
+                );
+            }
+        }
+
+        int clear = validSlot(configManager.gui().getInt("message-colors.clear.slot", 49), inventory.getSize(), 49);
+        inventory.setItem(
+                clear,
+                configuredItem("message-colors.clear", player, null, owned.size(), selected.isEmpty() ? 0 : 1, Material.GRAY_DYE)
+        );
+
+        if (page > 0) {
+            int previous = validSlot(configManager.gui().getInt("message-colors.pagination.previous.slot", 47), inventory.getSize(), 47);
+            inventory.setItem(previous, paginationItem("message-colors.pagination.previous", player, page, pages, owned.size(), selected.isEmpty() ? 0 : 1, Material.ARROW));
+        }
+        if (page + 1 < pages) {
+            int next = validSlot(configManager.gui().getInt("message-colors.pagination.next.slot", 51), inventory.getSize(), 51);
+            inventory.setItem(next, paginationItem("message-colors.pagination.next", player, page, pages, owned.size(), selected.isEmpty() ? 0 : 1, Material.ARROW));
+        }
+    }
+
+    private int nicknameColorPageCount(Player player, int inventorySize) {
         int pageSize = Math.max(1, slots("nickname-colors.color-slots", inventorySize).size());
         int owned = paintService.getOwnedColors(player).size();
         return Math.max(1, (owned + pageSize - 1) / pageSize);
     }
 
-    private ItemStack paginationItem(String path, Player player, int page, int pages, Material fallback) {
+    private int messageColorPageCount(Player player, int inventorySize) {
+        int pageSize = Math.max(1, slots("message-colors.color-slots", inventorySize).size());
+        int owned = messageColorService.getOwnedColors(player).size();
+        return Math.max(1, (owned + pageSize - 1) / pageSize);
+    }
+
+    private ItemStack paginationItem(String path, Player player, int page, int pages, int owned, int active, Material fallback) {
         YamlConfiguration gui = configManager.gui();
         Material material = material(gui.getString(path + ".material", fallback.name()), fallback);
         ItemStack item = new ItemStack(material);
@@ -217,7 +370,11 @@ public final class BadgeMenuManager {
         if (material == Material.PLAYER_HEAD) {
             customHeadService.apply(meta, gui.getString(path + ".head.minecraft-heads", ""), gui.getString(path + ".head.value", ""));
         }
-        Function<String, String> replacer = value -> paginationPlaceholders(placeholders(value, player, null, paintService.getOwnedColorIds(player).size(), paintService.selectedId(player).isPresent() ? 1 : 0), page, pages);
+        Function<String, String> replacer = value -> paginationPlaceholders(
+                placeholders(value, player, null, owned, active),
+                page,
+                pages
+        );
         meta.displayName(guiText(replacer.apply(gui.getString(path + ".name", "&7"))));
         List<Component> lore = new ArrayList<>();
         for (String line : gui.getStringList(path + ".lore")) {
@@ -234,9 +391,26 @@ public final class BadgeMenuManager {
         return stateItem(base, "badge", state, Material.PLAYER_HEAD, value -> placeholders(value, player, id, owned, activeCount));
     }
 
-    private ItemStack paintItem(Player player, NicknameColorDefinition definition, boolean selected, boolean available) {
+    private ItemStack nicknameColorItem(Player player, NicknameColorDefinition definition, boolean selected, boolean available) {
         String state = selected ? "selected" : available ? "available" : "locked";
-        return stateItem("nickname-color-items." + definition.id(), "nickname-color", state, Material.PLAYER_HEAD, value -> paintPlaceholders(value, player, definition, selected, available));
+        return stateItem(
+                "nickname-color-items." + definition.id(),
+                "nickname-color",
+                state,
+                Material.PLAYER_HEAD,
+                value -> nicknameColorPlaceholders(value, player, definition, selected, available)
+        );
+    }
+
+    private ItemStack messageColorItem(Player player, MessageColorDefinition definition, boolean selected, boolean available) {
+        String state = selected ? "selected" : available ? "available" : "locked";
+        return stateItem(
+                "message-color-items." + definition.id(),
+                "message-color",
+                state,
+                Material.PAPER,
+                value -> messageColorPlaceholders(value, player, definition, selected, available)
+        );
     }
 
     private ItemStack stateItem(String base, String global, String state, Material fallback, Function<String, String> replacer) {
@@ -294,36 +468,66 @@ public final class BadgeMenuManager {
         return List.of();
     }
 
-    private void renderSwitcher(Inventory inventory, Player player, MenuPage page, int owned, int active) {
+    private void renderNicknameSwitcher(Inventory inventory, Player player, MenuPage page, int owned, int active) {
         int slot = validSlot(configManager.gui().getInt("page-switcher.slot", 3), inventory.getSize(), 3);
+        String pageBase = page == MenuPage.NICKNAME_COLORS ? "page-switcher.nickname-colors-page" : "page-switcher.badges-page";
+        inventory.setItem(
+                slot,
+                navigationItem("page-switcher", pageBase, player, page, page.nicknameTarget(), owned, active, Material.PLAYER_HEAD)
+        );
+    }
+
+    private void renderMessageColorsSwitcher(Inventory inventory, Player player, MenuPage page, int owned, int active) {
+        int nicknameSwitcher = validSlot(configManager.gui().getInt("page-switcher.slot", 3), inventory.getSize(), 3);
+        int slot = validSlot(configManager.gui().getInt("message-colors-switcher.slot", 5), inventory.getSize(), 5);
+        if (slot == nicknameSwitcher) {
+            return;
+        }
+        String pageBase = page == MenuPage.MESSAGE_COLORS
+                ? "message-colors-switcher.message-colors-page"
+                : "message-colors-switcher.other-page";
+        inventory.setItem(
+                slot,
+                navigationItem("message-colors-switcher", pageBase, player, page, page.messageTarget(), owned, active, Material.PLAYER_HEAD)
+        );
+    }
+
+    private ItemStack navigationItem(
+            String root,
+            String pageBase,
+            Player player,
+            MenuPage currentPage,
+            MenuPage targetPage,
+            int owned,
+            int active,
+            Material fallback
+    ) {
         YamlConfiguration gui = configManager.gui();
-        String pageBase = page == MenuPage.BADGES ? "page-switcher.badges-page" : "page-switcher.nickname-colors-page";
-        Material material = material(firstString(gui, List.of(pageBase + ".material", "page-switcher.material"), "PLAYER_HEAD"), Material.PLAYER_HEAD);
+        Material material = material(firstString(gui, List.of(pageBase + ".material", root + ".material"), fallback.name()), fallback);
         ItemStack item = new ItemStack(material);
-        item.setAmount(Math.max(1, Math.min(material.getMaxStackSize(), firstInt(gui, List.of(pageBase + ".amount", "page-switcher.amount"), 1))));
+        item.setAmount(Math.max(1, Math.min(material.getMaxStackSize(), firstInt(gui, List.of(pageBase + ".amount", root + ".amount"), 1))));
         ItemMeta meta = item.getItemMeta();
         if (material == Material.PLAYER_HEAD) {
-            customHeadService.apply(meta, firstString(gui, List.of(pageBase + ".head.minecraft-heads", "page-switcher.head.minecraft-heads"), ""), firstString(gui, List.of(pageBase + ".head.value", "page-switcher.head.value"), ""));
+            customHeadService.apply(
+                    meta,
+                    firstString(gui, List.of(pageBase + ".head.minecraft-heads", root + ".head.minecraft-heads"), ""),
+                    firstString(gui, List.of(pageBase + ".head.value", root + ".head.value"), "")
+            );
         }
-        Function<String, String> replacer = value -> pagePlaceholders(placeholders(value, player, null, owned, active), page);
-        meta.displayName(guiText(replacer.apply(firstString(gui, List.of(pageBase + ".name", "page-switcher.name"), "&7"))));
-        List<String> lines = gui.isList(pageBase + ".lore") ? gui.getStringList(pageBase + ".lore") : gui.getStringList("page-switcher.lore");
+        Function<String, String> replacer = value -> navigationPlaceholders(
+                placeholders(value, player, null, owned, active),
+                currentPage,
+                targetPage
+        );
+        meta.displayName(guiText(replacer.apply(firstString(gui, List.of(pageBase + ".name", root + ".name"), "&7"))));
+        List<String> lines = gui.isList(pageBase + ".lore") ? gui.getStringList(pageBase + ".lore") : gui.getStringList(root + ".lore");
         List<Component> lore = new ArrayList<>();
         for (String line : lines) {
             lore.add(guiText(replacer.apply(line)));
         }
         meta.lore(lore);
         item.setItemMeta(meta);
-        inventory.setItem(slot, item);
-    }
-
-    private void renderMessageColorsSwitcher(Inventory inventory, Player player, int owned, int active) {
-        int nicknameSwitcher = validSlot(configManager.gui().getInt("page-switcher.slot", 3), inventory.getSize(), 3);
-        int slot = validSlot(configManager.gui().getInt("message-colors-switcher.slot", 5), inventory.getSize(), 5);
-        if (slot == nicknameSwitcher) {
-            return;
-        }
-        inventory.setItem(slot, configuredItem("message-colors-switcher", player, null, owned, active, Material.PLAYER_HEAD));
+        return item;
     }
 
     private ItemStack configuredItem(String path, Player player, String badgeId, int owned, int active, Material fallback) {
@@ -390,6 +594,7 @@ public final class BadgeMenuManager {
         replacements.put("max_owned", Integer.toString(badgeService.maxOwnedBadges()));
         replacements.put("max_active", Integer.toString(badgeService.maxVisibleBadges()));
         paintService.selectedId(player).ifPresent(id -> replacements.put("nickname_color", id));
+        messageColorService.selectedId(player).ifPresent(id -> replacements.put("message_color", id));
         if (badgeId != null) {
             boolean enabled = badgeService.getActiveBadgeIds(player).contains(badgeId);
             replacements.put("id", badgeId);
@@ -404,7 +609,7 @@ public final class BadgeMenuManager {
         return value;
     }
 
-    private String paintPlaceholders(String input, Player player, NicknameColorDefinition definition, boolean selected, boolean available) {
+    private String nicknameColorPlaceholders(String input, Player player, NicknameColorDefinition definition, boolean selected, boolean available) {
         return (input == null ? "" : input)
                 .replace("{color_id}", definition.id())
                 .replace("{color_name}", definition.name())
@@ -416,10 +621,30 @@ public final class BadgeMenuManager {
                 .replace("{player}", player.getName());
     }
 
-    private String pagePlaceholders(String input, MenuPage page) {
-        String current = page == MenuPage.BADGES ? "Значки" : "Покраски никнеймов";
-        String target = page == MenuPage.BADGES ? "Покраски никнеймов" : "Значки";
-        return (input == null ? "" : input).replace("{page}", current).replace("{target_page}", target);
+    private String messageColorPlaceholders(String input, Player player, MessageColorDefinition definition, boolean selected, boolean available) {
+        return (input == null ? "" : input)
+                .replace("{color_id}", definition.id())
+                .replace("{color_name}", definition.name())
+                .replace("{preview}", messageColorService.preview(definition))
+                .replace("{remaining}", messageColorService.formatRemaining(player, definition.id()))
+                .replace("{selected}", Boolean.toString(selected))
+                .replace("{available}", Boolean.toString(available))
+                .replace("{state}", selected ? "selected" : available ? "available" : "locked")
+                .replace("{player}", player.getName());
+    }
+
+    private String navigationPlaceholders(String input, MenuPage currentPage, MenuPage targetPage) {
+        return (input == null ? "" : input)
+                .replace("{page}", pageName(currentPage))
+                .replace("{target_page}", pageName(targetPage));
+    }
+
+    private String pageName(MenuPage page) {
+        return switch (page) {
+            case BADGES -> "Значки";
+            case NICKNAME_COLORS -> "Покраски никнеймов";
+            case MESSAGE_COLORS -> "Покраски сообщений";
+        };
     }
 
     private String paginationPlaceholders(String input, int page, int pages) {
