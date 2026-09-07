@@ -1,6 +1,7 @@
 package com.slyph.cloverbadges.placeholder;
 
 import com.slyph.cloverbadges.CloverBadges;
+import com.slyph.cloverbadges.messagecolor.PlayerMessageColorService;
 import com.slyph.cloverbadges.nicknamecolor.PlayerNicknameColorService;
 import com.slyph.cloverbadges.player.PlayerBadgeService;
 import com.slyph.cloverbadges.util.ColorUtil;
@@ -17,15 +18,18 @@ public final class CloverBadgesExpansion extends PlaceholderExpansion {
     private final CloverBadges plugin;
     private final PlayerBadgeService service;
     private final PlayerNicknameColorService nicknameColorService;
+    private final PlayerMessageColorService messageColorService;
 
     public CloverBadgesExpansion(
             CloverBadges plugin,
             PlayerBadgeService service,
-            PlayerNicknameColorService nicknameColorService
+            PlayerNicknameColorService nicknameColorService,
+            PlayerMessageColorService messageColorService
     ) {
         this.plugin = plugin;
         this.service = service;
         this.nicknameColorService = nicknameColorService;
+        this.messageColorService = messageColorService;
     }
 
     @Override
@@ -85,6 +89,17 @@ public final class CloverBadgesExpansion extends PlaceholderExpansion {
                     .map(nicknameColorService::getColorName)
                     .map(ColorUtil::legacySection)
                     .orElse(empty);
+            case "message_color", "message_color_style", "chat_color", "chat_color_style" -> messageColorService.selectedStyle(player);
+            case "message_color_id", "chat_color_id" -> messageColorService.selectedId(player).orElse(empty);
+            case "message_color_name", "chat_color_name" -> messageColorService.selectedId(player)
+                    .map(messageColorService::getColorName)
+                    .map(ColorUtil::legacySection)
+                    .orElse(empty);
+            case "message_color_gradient", "chat_color_gradient" -> messageColorService.selectedGradient(player);
+            case "message_color_format", "chat_color_format" -> messageColorService.selectedFormat(player);
+            case "message_color_remaining", "chat_color_remaining" -> messageColorService.selectedId(player)
+                    .map(id -> messageColorService.formatRemaining(player, id))
+                    .orElse(empty);
             case "separator" -> ColorUtil.legacySection(plugin.getConfig().getString("display.separator", " "));
             case "newcomer" -> Boolean.toString(service.isNewcomer(player));
             case "newcomer_remaining" -> service.formatNewcomerRemaining(player);
@@ -95,6 +110,17 @@ public final class CloverBadgesExpansion extends PlaceholderExpansion {
     }
 
     private Optional<String> dynamic(OfflinePlayer player, String parameter, String empty) {
+        if (parameter.startsWith("has_message_color_")) {
+            String id = parameter.substring("has_message_color_".length());
+            return Optional.of(Boolean.toString(messageColorService.hasColor(player, id)));
+        }
+        if (parameter.startsWith("message_color_expires_")) {
+            String id = parameter.substring("message_color_expires_".length());
+            if (messageColorService.getDefinition(id).isEmpty()) {
+                return Optional.of(empty);
+            }
+            return Optional.of(messageColorService.formatRemaining(player, id));
+        }
         if (parameter.startsWith("has_")) {
             String id = parameter.substring(4);
             return Optional.of(Boolean.toString(service.hasBadge(player, id)));
