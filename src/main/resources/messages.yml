@@ -4,9 +4,9 @@ messages:
     - '&FFD166CloverBadges &8• &FFFFFFКоманды'
     - '&7'
   help-give:
-    - '&787878▪ &FFFFFF/badge give <игрок> <badge|paint> <id> [время|permanent]'
+    - '&787878▪ &FFFFFF/badge give <игрок> <badge|paint|messagepaint> <id> [время|permanent]'
   help-remove:
-    - '&787878▪ &FFFFFF/badge remove <игрок> <badge|paint> <id>'
+    - '&787878▪ &FFFFFF/badge remove <игрок> <badge|paint|messagepaint> <id>'
   help-reload:
     - '&787878▪ &FFFFFF/badge reload'
   help-footer:
@@ -21,7 +21,7 @@ messages:
     - '&7'
   invalid-category:
     - '&7'
-    - '&C72B2B❌  &FF9089|  &FF5A5AУкажи категорию badge или paint'
+    - '&C72B2B❌  &FF9089|  &FF5A5AУкажи категорию badge, paint или messagepaint'
     - '&7'
   badge-not-found:
     - '&7'
@@ -53,31 +53,59 @@ messages:
     - '&7'
   paint-not-found:
     - '&7'
-    - '&C72B2B❌  &FF9089|  &FF5A5AПокраска не найдена'
+    - '&C72B2B❌  &FF9089|  &FF5A5AПокраска никнейма не найдена'
     - '&7'
   paint-already-owned:
     - '&7'
-    - '&C72B2B❌  &FF9089|  &FF5A5AУ игрока {player} уже есть покраска {paint}'
+    - '&C72B2B❌  &FF9089|  &FF5A5AУ игрока {player} уже есть покраска никнейма {paint}'
     - '&7'
   target-paint-not-owned:
     - '&7'
-    - '&C72B2B❌  &FF9089|  &FF5A5AУ игрока {player} нет покраски {paint}'
+    - '&C72B2B❌  &FF9089|  &FF5A5AУ игрока {player} нет покраски никнейма {paint}'
     - '&7'
   paint-given:
     - '&7'
-    - '&86E96E✔  &6DBF58|  &86E96EИгроку {player} выдана покраска {paint} на {duration}'
+    - '&86E96E✔  &6DBF58|  &86E96EИгроку {player} выдана покраска никнейма {paint} на {duration}'
     - '&7'
   paint-received:
     - '&7'
-    - '&86E96E✔  &6DBF58|  &86E96EТы получил покраску {paint} на {duration}'
+    - '&86E96E✔  &6DBF58|  &86E96EТы получил покраску никнейма {paint} на {duration}'
     - '&7'
   paint-remove-success:
     - '&7'
-    - '&86E96E✔  &6DBF58|  &86E96EУ игрока {player} удалена покраска {paint}'
+    - '&86E96E✔  &6DBF58|  &86E96EУ игрока {player} удалена покраска никнейма {paint}'
     - '&7'
   paint-removed:
     - '&7'
-    - '&6EE9E5🔔  &58B1BF|  &6EE9E5У тебя забрали покраску {paint}'
+    - '&6EE9E5🔔  &58B1BF|  &6EE9E5У тебя забрали покраску никнейма {paint}'
+    - '&7'
+  message-paint-not-found:
+    - '&7'
+    - '&C72B2B❌  &FF9089|  &FF5A5AПокраска сообщений не найдена'
+    - '&7'
+  message-paint-already-owned:
+    - '&7'
+    - '&C72B2B❌  &FF9089|  &FF5A5AУ игрока {player} уже есть покраска сообщений {message_paint}'
+    - '&7'
+  target-message-paint-not-owned:
+    - '&7'
+    - '&C72B2B❌  &FF9089|  &FF5A5AУ игрока {player} нет покраски сообщений {message_paint}'
+    - '&7'
+  message-paint-given:
+    - '&7'
+    - '&86E96E✔  &6DBF58|  &86E96EИгроку {player} выдана покраска сообщений {message_paint} на {duration}'
+    - '&7'
+  message-paint-received:
+    - '&7'
+    - '&86E96E✔  &6DBF58|  &86E96EТы получил покраску сообщений {message_paint} на {duration}'
+    - '&7'
+  message-paint-remove-success:
+    - '&7'
+    - '&86E96E✔  &6DBF58|  &86E96EУ игрока {player} удалена покраска сообщений {message_paint}'
+    - '&7'
+  message-paint-removed:
+    - '&7'
+    - '&6EE9E5🔔  &58B1BF|  &6EE9E5У тебя забрали покраску сообщений {message_paint}'
     - '&7'
   invalid-duration:
     - '&7'
