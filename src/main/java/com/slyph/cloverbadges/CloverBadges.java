@@ -11,6 +11,9 @@ import com.slyph.cloverbadges.gui.action.BadgeActionExecutor;
 import com.slyph.cloverbadges.head.CustomHeadService;
 import com.slyph.cloverbadges.listener.PlayerListener;
 import com.slyph.cloverbadges.message.MessageService;
+import com.slyph.cloverbadges.messagecolor.MessageColorRegistry;
+import com.slyph.cloverbadges.messagecolor.PlayerMessageColorService;
+import com.slyph.cloverbadges.messagecolor.storage.MessageColorStore;
 import com.slyph.cloverbadges.nametag.NametagService;
 import com.slyph.cloverbadges.nametag.integration.TabNametagBridge;
 import com.slyph.cloverbadges.nicknamecolor.NicknameColorRegistry;
@@ -33,6 +36,7 @@ public final class CloverBadges extends JavaPlugin {
     private MessageService messageService;
     private PlayerBadgeService badgeService;
     private PlayerNicknameColorService nicknameColorService;
+    private PlayerMessageColorService messageColorService;
     private CustomHeadService customHeadService;
     private NametagService nametagService;
     private CloverBadgesExpansion expansion;
@@ -56,6 +60,10 @@ public final class CloverBadges extends JavaPlugin {
                 nicknamePreviewService
         );
 
+        MessageColorRegistry messageColorRegistry = new MessageColorRegistry(configManager);
+        MessageColorStore messageColorStore = new MessageColorStore(this);
+        messageColorService = new PlayerMessageColorService(this, messageColorRegistry, messageColorStore);
+
         TabNametagBridge tabNametagBridge = createTabNametagBridge();
         nametagService = new NametagService(this, badgeService, nicknameColorService, tabNametagBridge);
 
@@ -65,20 +73,21 @@ public final class CloverBadges extends JavaPlugin {
                 configManager,
                 badgeService,
                 nicknameColorService,
+                messageColorService,
                 actionExecutor,
                 customHeadService
         );
 
         PluginCommand badgeCommand = Objects.requireNonNull(getCommand("badge"));
-        badgeCommand.setExecutor(new BadgeCommand(this, badgeService, nicknameColorService, messageService, menuManager));
-        badgeCommand.setTabCompleter(new BadgeTabCompleter(badgeService, nicknameColorService));
+        badgeCommand.setExecutor(new BadgeCommand(this, badgeService, nicknameColorService, messageColorService, messageService, menuManager));
+        badgeCommand.setTabCompleter(new BadgeTabCompleter(badgeService, nicknameColorService, messageColorService));
 
-        getServer().getPluginManager().registerEvents(new PlayerListener(badgeService, nicknameColorService, nametagService), this);
+        getServer().getPluginManager().registerEvents(new PlayerListener(badgeService, nicknameColorService, messageColorService, nametagService), this);
         getServer().getPluginManager().registerEvents(new BadgeMenuListener(menuManager), this);
         getServer().getServicesManager().register(BadgeApi.class, badgeService, this, ServicePriority.Normal);
 
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            expansion = new CloverBadgesExpansion(this, badgeService, nicknameColorService);
+            expansion = new CloverBadgesExpansion(this, badgeService, nicknameColorService, messageColorService);
             expansion.register();
         }
 
@@ -108,6 +117,9 @@ public final class CloverBadges extends JavaPlugin {
         if (nicknameColorService != null) {
             nicknameColorService.flushStorage();
         }
+        if (messageColorService != null) {
+            messageColorService.flushStorage();
+        }
         getServer().getServicesManager().unregisterAll(this);
     }
 
@@ -115,6 +127,7 @@ public final class CloverBadges extends JavaPlugin {
         configManager.reload();
         badgeRegistry.reload();
         nicknameColorService.reload();
+        messageColorService.reload();
         customHeadService.reload();
         nametagService.reload();
         scheduleCleanup();
@@ -140,6 +153,7 @@ public final class CloverBadges extends JavaPlugin {
         cleanupTask = getServer().getScheduler().runTaskTimer(this, () -> {
             badgeService.cleanupExpired();
             nicknameColorService.cleanupExpired();
+            messageColorService.cleanupExpired();
         }, interval, interval);
     }
 
