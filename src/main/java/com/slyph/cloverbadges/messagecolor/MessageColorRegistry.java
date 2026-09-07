@@ -64,4 +64,9 @@ public final class MessageColorRegistry {
     public List<String> allIds() {
         return sorted().stream().map(MessageColorDefinition::id).toList();
     }
+
+    public String previewText() {
+        String value = configManager.messageColors().getString("preview-text", "Пример сообщения");
+        return value == null || value.isBlank() ? "Пример сообщения" : value;
+    }
 }
