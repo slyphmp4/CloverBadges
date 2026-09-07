@@ -66,9 +66,13 @@ public final class BadgeMenuManager {
             return;
         }
         Inventory inventory = holder.getInventory();
-        int switcher = validSlot(configManager.gui().getInt("page-switcher.slot", 4), inventory.getSize(), 4);
+        int switcher = validSlot(configManager.gui().getInt("page-switcher.slot", 3), inventory.getSize(), 3);
         if (rawSlot == switcher) {
             open(player, holder.page().opposite());
+            return;
+        }
+        int messageColorsSwitcher = validSlot(configManager.gui().getInt("message-colors-switcher.slot", 5), inventory.getSize(), 5);
+        if (rawSlot == messageColorsSwitcher) {
             return;
         }
         if (holder.page() == MenuPage.NICKNAME_COLORS) {
@@ -128,6 +132,7 @@ public final class BadgeMenuManager {
         int owned = badgeService.getOwnedBadgeIds(player).size();
         int active = badgeService.getActiveBadgeIds(player).size();
         renderSwitcher(inventory, player, holder.page(), owned, active);
+        renderMessageColorsSwitcher(inventory, player, owned, active);
         if (holder.page() == MenuPage.NICKNAME_COLORS) {
             renderPaints(holder, player);
         } else {
@@ -290,7 +295,7 @@ public final class BadgeMenuManager {
     }
 
     private void renderSwitcher(Inventory inventory, Player player, MenuPage page, int owned, int active) {
-        int slot = validSlot(configManager.gui().getInt("page-switcher.slot", 4), inventory.getSize(), 4);
+        int slot = validSlot(configManager.gui().getInt("page-switcher.slot", 3), inventory.getSize(), 3);
         YamlConfiguration gui = configManager.gui();
         String pageBase = page == MenuPage.BADGES ? "page-switcher.badges-page" : "page-switcher.nickname-colors-page";
         Material material = material(firstString(gui, List.of(pageBase + ".material", "page-switcher.material"), "PLAYER_HEAD"), Material.PLAYER_HEAD);
@@ -310,6 +315,15 @@ public final class BadgeMenuManager {
         meta.lore(lore);
         item.setItemMeta(meta);
         inventory.setItem(slot, item);
+    }
+
+    private void renderMessageColorsSwitcher(Inventory inventory, Player player, int owned, int active) {
+        int nicknameSwitcher = validSlot(configManager.gui().getInt("page-switcher.slot", 3), inventory.getSize(), 3);
+        int slot = validSlot(configManager.gui().getInt("message-colors-switcher.slot", 5), inventory.getSize(), 5);
+        if (slot == nicknameSwitcher) {
+            return;
+        }
+        inventory.setItem(slot, configuredItem("message-colors-switcher", player, null, owned, active, Material.PLAYER_HEAD));
     }
 
     private ItemStack configuredItem(String path, Player player, String badgeId, int owned, int active, Material fallback) {
