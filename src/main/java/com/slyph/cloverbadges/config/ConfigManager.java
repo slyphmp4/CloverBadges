@@ -256,6 +256,39 @@ public final class ConfigManager {
         }
         if (layoutVersion < 13) {
             configuration.set("menu.layout-version", 13);
+            layoutVersion = 13;
+        }
+        if (layoutVersion < 14) {
+            if (configuration.getString("message-color.material", "PAPER").equalsIgnoreCase("PAPER")) {
+                configuration.set("message-color.material", "PLAYER_HEAD");
+            }
+            if (!configuration.contains("message-color.head.minecraft-heads")) {
+                configuration.set("message-color.head.minecraft-heads", "");
+            }
+            if (!configuration.contains("message-color.head.value")) {
+                configuration.set("message-color.head.value", "");
+            }
+            migrateMessageColorHead(configuration, "cotton_candy", "PINK_DYE", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZmMxYjRjYjdmNmYxNjEyMjNiZjBiM2U2YjNkOGFhZDRjMTBhYmIyNGJhNTI1NGYwZWY0MDBjOTY3NGY5YTYzIn19fQ==");
+            migrateMessageColorHead(configuration, "apricot_cloud", "ORANGE_DYE", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMmM0ODg2ZWYzNjJiMmM4MjNhNmFhNjUyNDFjNWM3ZGU3MWM5NGQ4ZWM1ODIyYzUxZTk2OTc2NjQxZjUzZWEzNSJ9fX0=");
+            migrateMessageColorHead(configuration, "frozen_lilac", "PURPLE_DYE", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTMyYWUyY2I4ZDJhZTYxNTE0MWQyYzY1ODkyZjM2NGZjYWRkZjczZmRlYzk5YmUxYWE2ODc0ODYzZWViNWMifX19");
+            migrateMessageColorHead(configuration, "mint_cream", "LIME_DYE", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMDdjNzhmM2VlNzgzZmVlY2QyNjkyZWJhNTQ4NTFkYTVjNDMyMzA1NWViZDJmNjgzY2QzZTgzMDJmZWE3YyJ9fX0=");
+            migrateMessageColorHead(configuration, "sunset_milk", "MAGENTA_DYE", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZGNmMjgzNTE4MGNiZmVjM2IzMTdkNmE0NzQ5MWE3NGFlNzE0MzViYTE2OWE1NzkyNWI5MDk2ZWEyZjljNjFiNiJ9fX0=");
+            migrateMessageColorHead(configuration, "electric_peach", "RED_DYE", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNWZkZTNiZmNlMmQ4Y2I3MjRkZTg1NTZlNWVjMjFiN2YxNWY1ODQ2ODRhYjc4NTIxNGFkZDE2NGJlNzYyNGIifX19");
+            migrateMessageColorHead(configuration, "cyber_mint", "CYAN_DYE", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMDdjNzhmM2VlNzgzZmVlY2QyNjkyZWJhNTQ4NTFkYTVjNDMyMzA1NWViZDJmNjgzY2QzZTgzMDJmZWE3YyJ9fX0=");
+            migrateMessageColorHead(configuration, "orchid_flash", "MAGENTA_DYE", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZGNmMjgzNTE4MGNiZmVjM2IzMTdkNmE0NzQ5MWE3NGFlNzE0MzViYTE2OWE1NzkyNWI5MDk2ZWEyZjljNjFiNiJ9fX0=");
+            migrateMessageColorHead(configuration, "acid_sky", "LIGHT_BLUE_DYE", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMzNmNzVjYzJiN2YzYjI0MTgyNDJlNDU0MTg3MTU2YzUxYjA1OGU0MzQyNTQ4OWE4MGE1NTY4NTQyYjgzYzk0In19fQ==");
+            migrateMessageColorHead(configuration, "polar_light", "GLOW_INK_SAC", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMDdjNzhmM2VlNzgzZmVlY2QyNjkyZWJhNTQ4NTFkYTVjNDMyMzA1NWViZDJmNjgzY2QzZTgzMDJmZWE3YyJ9fX0=");
+            migrateMessageColorHead(configuration, "cherry_soda", "PINK_DYE", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZmMxYjRjYjdmNmYxNjEyMjNiZjBiM2U2YjNkOGFhZDRjMTBhYmIyNGJhNTI1NGYwZWY0MDBjOTY3NGY5YTYzIn19fQ==");
+            migrateMessageColorHead(configuration, "cosmic_ice", "LAPIS_LAZULI", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYjhhZmExNTU1ZTlmODc2NDgxZTNjNDI5OWVjNmU5MWQyMmI0MDc1ZTY3ZTU4ZWY4MGRjZDE5MGFjZTY1MTlmIn19fQ==");
+            migrateMessageColorHead(configuration, "honey_lavender", "HONEYCOMB", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2Y4OTVmYjA3NWI4Njg5ZmEzY2NiM2QxMmM4NDExNjc1ODc4NGM4ZTdlYWUyYTI4MmEyYjQwYTYyOTc1Yzg0ZSJ9fX0=");
+            migrateMessageColorHead(configuration, "sea_glass", "PRISMARINE_CRYSTALS", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMDdjNzhmM2VlNzgzZmVlY2QyNjkyZWJhNTQ4NTFkYTVjNDMyMzA1NWViZDJmNjgzY2QzZTgzMDJmZWE3YyJ9fX0=");
+            migrateMessageColorHead(configuration, "velvet_dusk", "AMETHYST_SHARD", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTMyYWUyY2I4ZDJhZTYxNTE0MWQyYzY1ODkyZjM2NGZjYWRkZjczZmRlYzk5YmUxYWE2ODc0ODYzZWViNWMifX19");
+            migrateMessageColorHead(configuration, "neon_melon", "LIME_DYE", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2Y4OTVmYjA3NWI4Njg5ZmEzY2NiM2QxMmM4NDExNjc1ODc4NGM4ZTdlYWUyYTI4MmEyYjQwYTYyOTc1Yzg0ZSJ9fX0=");
+            migrateMessageColorHead(configuration, "rose_quartz", "QUARTZ", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZmMxYjRjYjdmNmYxNjEyMjNiZjBiM2U2YjNkOGFhZDRjMTBhYmIyNGJhNTI1NGYwZWY0MDBjOTY3NGY5YTYzIn19fQ==");
+            migrateMessageColorHead(configuration, "blue_hour", "BLUE_DYE", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYjhhZmExNTU1ZTlmODc2NDgxZTNjNDI5OWVjNmU5MWQyMmI0MDc1ZTY3ZTU4ZWY4MGRjZDE5MGFjZTY1MTlmIn19fQ==");
+            migrateMessageColorHead(configuration, "aurora_coral", "HEART_OF_THE_SEA", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNWZkZTNiZmNlMmQ4Y2I3MjRkZTg1NTZlNWVjMjFiN2YxNWY1ODQ2ODRhYjc4NTIxNGFkZDE2NGJlNzYyNGIifX19");
+            migrateMessageColorHead(configuration, "pixel_sherbet", "GLOWSTONE_DUST", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMmM0ODg2ZWYzNjJiMmM4MjNhNmFhNjUyNDFjNWM3ZGU3MWM5NGQ4ZWM1ODIyYzUxZTk2OTc2NjQxZjUzZWEzNSJ9fX0=");
+            configuration.set("menu.layout-version", 14);
         }
     }
 
@@ -263,6 +296,20 @@ public final class ConfigManager {
         String path = "nickname-color-items." + id + ".material";
         if (configuration.getString(path, oldMaterial).equalsIgnoreCase(oldMaterial)) {
             configuration.set(path, "PLAYER_HEAD");
+        }
+    }
+
+    private void migrateMessageColorHead(YamlConfiguration configuration, String id, String oldMaterial, String defaultValue) {
+        String base = "message-color-items." + id;
+        String materialPath = base + ".material";
+        if (configuration.getString(materialPath, oldMaterial).equalsIgnoreCase(oldMaterial)) {
+            configuration.set(materialPath, "PLAYER_HEAD");
+        }
+        if (!configuration.contains(base + ".head.minecraft-heads")) {
+            configuration.set(base + ".head.minecraft-heads", "");
+        }
+        if (!configuration.contains(base + ".head.value")) {
+            configuration.set(base + ".head.value", defaultValue);
         }
     }
 
