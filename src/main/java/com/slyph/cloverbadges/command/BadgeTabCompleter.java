@@ -1,5 +1,6 @@
 package com.slyph.cloverbadges.command;
 
+import com.slyph.cloverbadges.messagecolor.PlayerMessageColorService;
 import com.slyph.cloverbadges.nicknamecolor.PlayerNicknameColorService;
 import com.slyph.cloverbadges.player.PlayerBadgeService;
 import org.bukkit.Bukkit;
@@ -18,10 +19,16 @@ import java.util.Locale;
 public final class BadgeTabCompleter implements TabCompleter {
     private final PlayerBadgeService badgeService;
     private final PlayerNicknameColorService paintService;
+    private final PlayerMessageColorService messageColorService;
 
-    public BadgeTabCompleter(PlayerBadgeService badgeService, PlayerNicknameColorService paintService) {
+    public BadgeTabCompleter(
+            PlayerBadgeService badgeService,
+            PlayerNicknameColorService paintService,
+            PlayerMessageColorService messageColorService
+    ) {
         this.badgeService = badgeService;
         this.paintService = paintService;
+        this.messageColorService = messageColorService;
     }
 
     @Override
@@ -49,14 +56,14 @@ public final class BadgeTabCompleter implements TabCompleter {
             return filter(onlineNames(), args[1]);
         }
         if (args.length == 3) {
-            return filter(List.of("badge", "paint"), args[2]);
+            return filter(List.of("badge", "paint", "messagepaint"), args[2]);
         }
         if (args.length == 4) {
             Player target = Bukkit.getPlayerExact(args[1]);
             if (target == null) {
                 return List.of();
             }
-            String category = args[2].toLowerCase(Locale.ROOT);
+            String category = normalizeCategory(args[2]);
             if (category.equals("badge")) {
                 if (give) {
                     return filter(badgeService.allBadgeIds().stream()
@@ -73,6 +80,14 @@ public final class BadgeTabCompleter implements TabCompleter {
                 }
                 return filter(paintService.getOwnedColorIds(target), args[3]);
             }
+            if (category.equals("messagepaint")) {
+                if (give) {
+                    return filter(messageColorService.allColorIds().stream()
+                            .filter(id -> !messageColorService.hasColor(target, id))
+                            .toList(), args[3]);
+                }
+                return filter(messageColorService.getOwnedColorIds(target), args[3]);
+            }
         }
 
         if (give && args.length == 5) {
@@ -80,6 +95,14 @@ public final class BadgeTabCompleter implements TabCompleter {
         }
 
         return List.of();
+    }
+
+    private String normalizeCategory(String input) {
+        String category = input == null ? "" : input.toLowerCase(Locale.ROOT).replace("_", "").replace("-", "");
+        return switch (category) {
+            case "messagepaint", "messagecolor", "chatpaint", "chatcolor" -> "messagepaint";
+            default -> category;
+        };
     }
 
     private void addIf(CommandSender sender, List<String> target, String value, String permission) {
