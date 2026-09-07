@@ -192,11 +192,7 @@ public final class PlayerMessageColorService {
     }
 
     public String preview(MessageColorDefinition definition) {
-        String text = plugin.getConfig().getString("message-colors.preview-text", "Пример сообщения");
-        if (text == null || text.isBlank()) {
-            text = "Пример сообщения";
-        }
-        return render(text, definition);
+        return render(registry.previewText(), definition);
     }
 
     public String render(String text, MessageColorDefinition definition) {
