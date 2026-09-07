@@ -252,6 +252,10 @@ public final class ConfigManager {
                 configuration.set("message-colors-switcher.slot", 5);
             }
             configuration.set("menu.layout-version", 12);
+            layoutVersion = 12;
+        }
+        if (layoutVersion < 13) {
+            configuration.set("menu.layout-version", 13);
         }
     }
 
