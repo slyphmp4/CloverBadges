@@ -13,8 +13,10 @@ public final class BadgeMenuHolder implements InventoryHolder {
     private final MenuPage page;
     private final Map<Integer, String> badgeSlots = new HashMap<>();
     private final Map<Integer, String> nicknameColorSlots = new HashMap<>();
+    private final Map<Integer, String> messageColorSlots = new HashMap<>();
     private Inventory inventory;
     private int nicknameColorPage;
+    private int messageColorPage;
 
     public BadgeMenuHolder(UUID playerId, MenuPage page) {
         this.playerId = playerId;
@@ -37,6 +39,14 @@ public final class BadgeMenuHolder implements InventoryHolder {
         this.nicknameColorPage = Math.max(0, nicknameColorPage);
     }
 
+    public int messageColorPage() {
+        return messageColorPage;
+    }
+
+    public void messageColorPage(int messageColorPage) {
+        this.messageColorPage = Math.max(0, messageColorPage);
+    }
+
     public void inventory(Inventory inventory) {
         this.inventory = inventory;
     }
@@ -44,6 +54,7 @@ public final class BadgeMenuHolder implements InventoryHolder {
     public void clearSlots() {
         badgeSlots.clear();
         nicknameColorSlots.clear();
+        messageColorSlots.clear();
     }
 
     public void badgeSlot(int slot, String badgeId) {
@@ -60,6 +71,14 @@ public final class BadgeMenuHolder implements InventoryHolder {
 
     public String nicknameColorAt(int slot) {
         return nicknameColorSlots.get(slot);
+    }
+
+    public void messageColorSlot(int slot, String colorId) {
+        messageColorSlots.put(slot, colorId);
+    }
+
+    public String messageColorAt(int slot) {
+        return messageColorSlots.get(slot);
     }
 
     @Override
