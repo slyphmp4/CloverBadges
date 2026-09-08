@@ -4,6 +4,12 @@ newcomer:
   duration: "7d"
   auto-display: true
 
+first-join-message-color:
+  enabled: true
+  duration: "permanent"
+  auto-select: false
+  colors: []
+
 selection:
   clear-invalid-selection: true
 
