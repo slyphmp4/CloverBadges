@@ -236,13 +236,13 @@ public final class PlayerNicknameColorService {
         }
         Optional<String> selected = selectedId(player);
         if (selected.isEmpty()) {
-            return playerName;
+            return "§r" + playerName + "§r";
         }
         NicknameColorDefinition definition = registry.get(selected.get()).orElse(null);
         if (definition == null) {
-            return playerName;
+            return "§r" + playerName + "§r";
         }
-        return ColorUtil.legacySection(renderNickname(playerName, definition) + "&r");
+        return "§r" + ColorUtil.legacySection(renderNickname(playerName, definition)) + "§r";
     }
 
     public synchronized String formatRemaining(OfflinePlayer player, String colorId) {
