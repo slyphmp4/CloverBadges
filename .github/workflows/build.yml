@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -33,3 +36,28 @@ jobs:
           name: CloverBadges
           path: build/libs/CloverBadges-*.jar
           if-no-files-found: error
+
+      - name: Read version
+        if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release CloverBadges v')
+        id: version
+        shell: bash
+        run: echo "version=$(sed -n \"s/^version = '\([^']*\)'/\1/p\" build.gradle)" >> "$GITHUB_OUTPUT"
+
+      - name: Generate SHA256
+        if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release CloverBadges v')
+        shell: bash
+        run: sha256sum "build/libs/CloverBadges-${{ steps.version.outputs.version }}.jar" > "build/libs/CloverBadges-${{ steps.version.outputs.version }}.jar.sha256"
+
+      - name: Create GitHub release
+        if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release CloverBadges v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create "v${{ steps.version.outputs.version }}" \
+            "build/libs/CloverBadges-${{ steps.version.outputs.version }}.jar" \
+            "build/libs/CloverBadges-${{ steps.version.outputs.version }}.jar.sha256" \
+            --title "CloverBadges v${{ steps.version.outputs.version }}" \
+            --notes "## What's new
+          - Fixed nickname color inheritance from badge formatting for players without a selected nickname color.
+          - Nickname placeholders now reset inherited formatting before and after the nickname."
