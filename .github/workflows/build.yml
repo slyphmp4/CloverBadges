@@ -41,7 +41,9 @@ jobs:
         if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release CloverBadges v')
         id: version
         shell: bash
-        run: echo "version=$(sed -n \"s/^version = '\([^']*\)'/\1/p\" build.gradle)" >> "$GITHUB_OUTPUT"
+        run: |
+          VERSION=$(gradle properties -q | awk '/^version:/ {print $2}')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Generate SHA256
         if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release CloverBadges v')
