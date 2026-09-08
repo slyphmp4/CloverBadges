@@ -82,7 +82,7 @@ public final class CloverBadges extends JavaPlugin {
         badgeCommand.setExecutor(new BadgeCommand(this, badgeService, nicknameColorService, messageColorService, messageService, menuManager));
         badgeCommand.setTabCompleter(new BadgeTabCompleter(badgeService, nicknameColorService, messageColorService));
 
-        getServer().getPluginManager().registerEvents(new PlayerListener(badgeService, nicknameColorService, messageColorService, nametagService), this);
+        getServer().getPluginManager().registerEvents(new PlayerListener(this, badgeService, nicknameColorService, messageColorService, nametagService), this);
         getServer().getPluginManager().registerEvents(new BadgeMenuListener(menuManager), this);
         getServer().getServicesManager().register(BadgeApi.class, badgeService, this, ServicePriority.Normal);
 
