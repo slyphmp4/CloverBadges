@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   build:
+    needs: [previous-api, smoke]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -47,6 +48,33 @@ jobs:
         if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release CloverBadges v')
         shell: bash
         run: sha256sum "build/libs/CloverBadges-${{ steps.version.outputs.version }}.jar" > "build/libs/CloverBadges-${{ steps.version.outputs.version }}.jar.sha256"
+
+      - name: Delete merged release branch
+        if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release CloverBadges v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_MESSAGE: ${{ github.event.head_commit.message }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          PR_NUMBER=$(printf '%s\n' "$RELEASE_MESSAGE" | awk '$1 == "Release-PR:" {print $2}')
+          EXPECTED_HEAD=$(printf '%s\n' "$RELEASE_MESSAGE" | awk '$1 == "Release-Head:" {print $2}')
+          if [ -z "$PR_NUMBER" ] && [ -z "$EXPECTED_HEAD" ]; then
+            exit 0
+          fi
+          [[ "$PR_NUMBER" =~ ^[1-9][0-9]*$ ]]
+          [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
+          PR_JSON=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}")
+          jq -e --arg repository "$GITHUB_REPOSITORY" --arg base "$GITHUB_REF_NAME" --arg head "$EXPECTED_HEAD" \
+            '.merged == true and .head.repo.full_name == $repository and .base.ref == $base and .head.ref != $base and .head.sha == $head' \
+            <<< "$PR_JSON" > /dev/null
+          HEAD_BRANCH=$(jq -r '.head.ref' <<< "$PR_JSON")
+          REMOTE_HEAD=$(git ls-remote --heads origin "refs/heads/${HEAD_BRANCH}" | awk '{print $1}')
+          if [ -z "$REMOTE_HEAD" ]; then
+            exit 0
+          fi
+          [ "$REMOTE_HEAD" = "$EXPECTED_HEAD" ]
+          gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/${HEAD_BRANCH}"
 
       - name: Create GitHub release
         if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release CloverBadges v')

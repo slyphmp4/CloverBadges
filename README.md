@@ -880,6 +880,8 @@ Release CloverBadges v
 
 trigger the release steps in the current workflow, including JAR creation, SHA-256 generation and GitHub Release publishing.
 
+Publishing waits for the previous-API build and every runtime smoke check. A release commit may include `Release-PR: <number>` and `Release-Head: <full SHA>` trailers to remove its merged working branch before publication. Cleanup verifies the repository, target branch, merged PR and unchanged branch head; an already deleted branch is skipped.
+
 ---
 
 ## Troubleshooting
