@@ -1,0 +1,10 @@
+name: CloverBadgesSmokeTest
+version: '1.0'
+main: com.slyph.cloverbadges.smoke.CloverBadgesSmokeTest
+author: slyph
+api-version: '1.16'
+depend:
+  - CloverBadges
+softdepend:
+  - PlaceholderAPI
+  - TAB

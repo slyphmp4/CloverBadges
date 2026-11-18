@@ -7,7 +7,7 @@
 [![Build](https://github.com/slyphmp4/CloverBadges/actions/workflows/build.yml/badge.svg)](https://github.com/slyphmp4/CloverBadges/actions/workflows/build.yml)
 [![Latest Release](https://img.shields.io/github/v/release/slyphmp4/CloverBadges?include_prereleases&style=flat-square)](https://github.com/slyphmp4/CloverBadges/releases)
 [![Java](https://img.shields.io/badge/Java-25-ED8B00?style=flat-square&logo=openjdk&logoColor=white)](https://openjdk.org/)
-[![Paper API](https://img.shields.io/badge/Paper_API-26.2-2C2C2C?style=flat-square)](https://papermc.io/)
+[![Paper API](https://img.shields.io/badge/Paper_API-26.3-2C2C2C?style=flat-square)](https://papermc.io/)
 [![PlaceholderAPI](https://img.shields.io/badge/PlaceholderAPI-optional-4B8BBE?style=flat-square)](https://www.spigotmc.org/resources/placeholderapi.6245/)
 
 [Releases](https://github.com/slyphmp4/CloverBadges/releases) · [Builds](https://github.com/slyphmp4/CloverBadges/actions) · [Issues](https://github.com/slyphmp4/CloverBadges/issues)
@@ -151,12 +151,15 @@ The `&RRGGBB` format is normalized internally and parsed through Adventure seria
 | Component | Version / status |
 | --- | --- |
 | Java | **25** |
-| Minecraft / Paper API | **26.2** (`26.2.build.110-stable`) |
+| Minecraft / Paper | **26.2 and 26.3**, Java 25 |
+| Compile API | `26.3.build.253-stable` |
 | PlaceholderAPI | Optional, recommended |
 | TAB | Optional, used by the nametag bridge |
 | UltraPermissions | Optional soft dependency / permission manager |
 
-The plugin is compiled against Paper API 26.2 and uses Adventure components where appropriate.
+The plugin is compiled against the pinned Paper API 26.3 build 253 and uses Adventure components, including inventory titles. The same production JAR is exercised on Paper 26.2 and 26.3 by the runtime smoke tests.
+
+Fabric requires a compatible Bukkit/Paper bridge such as Cardboard. A separate local run on Cardboard 26.3.0 passed using the existing AUTO → ArmorStand nametag fallback. See [validation results and limits](VALIDATION.md).
 
 `plugin.yml` currently declares `api-version: 1.16`.
 
@@ -718,47 +721,71 @@ Avoid manually editing runtime data files while the server is running.
 ## Project structure
 
 ```text
-CloverBadges/
-├── .github/
-│   └── workflows/
-│       └── build.yml
-├── build.gradle
-├── gradle.properties
-├── settings.gradle
-└── src/
-    └── main/
-        ├── java/com/slyph/cloverbadges/
-        │   ├── api/
-        │   ├── badge/
-        │   ├── command/
-        │   ├── config/
-        │   ├── gui/
-        │   │   └── action/
-        │   ├── head/
-        │   ├── listener/
-        │   ├── message/
-        │   ├── messagecolor/
-        │   │   ├── render/
-        │   │   └── storage/
-        │   ├── nametag/
-        │   │   ├── integration/
-        │   │   └── render/
-        │   ├── nicknamecolor/
-        │   │   ├── preview/
-        │   │   ├── render/
-        │   │   └── storage/
-        │   ├── placeholder/
-        │   ├── player/
-        │   ├── storage/
-        │   └── util/
-        └── resources/
-            ├── badges.yml
-            ├── config.yml
-            ├── gui.yml
-            ├── message-colors.yml
-            ├── messages.yml
-            ├── nickname-colors.yml
-            └── plugin.yml
+.github/workflows/build.yml
+.gitignore
+CHANGELOG.md
+README.md
+VALIDATION.md
+build.gradle
+gradle.properties
+gradle/wrapper/gradle-wrapper.jar
+gradle/wrapper/gradle-wrapper.properties
+gradlew
+gradlew.bat
+scripts/run_smoke.py
+settings.gradle
+src/main/java/com/slyph/cloverbadges/CloverBadges.java
+src/main/java/com/slyph/cloverbadges/api/BadgeApi.java
+src/main/java/com/slyph/cloverbadges/badge/BadgeDefinition.java
+src/main/java/com/slyph/cloverbadges/badge/BadgeRegistry.java
+src/main/java/com/slyph/cloverbadges/command/BadgeCommand.java
+src/main/java/com/slyph/cloverbadges/command/BadgeTabCompleter.java
+src/main/java/com/slyph/cloverbadges/config/ConfigManager.java
+src/main/java/com/slyph/cloverbadges/gui/BadgeMenuHolder.java
+src/main/java/com/slyph/cloverbadges/gui/BadgeMenuListener.java
+src/main/java/com/slyph/cloverbadges/gui/BadgeMenuManager.java
+src/main/java/com/slyph/cloverbadges/gui/MenuPage.java
+src/main/java/com/slyph/cloverbadges/gui/action/BadgeActionExecutor.java
+src/main/java/com/slyph/cloverbadges/head/CustomHeadService.java
+src/main/java/com/slyph/cloverbadges/listener/PlayerListener.java
+src/main/java/com/slyph/cloverbadges/message/MessageService.java
+src/main/java/com/slyph/cloverbadges/messagecolor/MessageColorDefinition.java
+src/main/java/com/slyph/cloverbadges/messagecolor/MessageColorGrant.java
+src/main/java/com/slyph/cloverbadges/messagecolor/MessageColorRegistry.java
+src/main/java/com/slyph/cloverbadges/messagecolor/PlayerMessageColorService.java
+src/main/java/com/slyph/cloverbadges/messagecolor/render/MessageGradientRenderer.java
+src/main/java/com/slyph/cloverbadges/messagecolor/storage/MessageColorStore.java
+src/main/java/com/slyph/cloverbadges/nametag/NametagService.java
+src/main/java/com/slyph/cloverbadges/nametag/integration/TabNametagBridge.java
+src/main/java/com/slyph/cloverbadges/nametag/render/AbstractNametagRenderer.java
+src/main/java/com/slyph/cloverbadges/nametag/render/ArmorStandNametagRenderer.java
+src/main/java/com/slyph/cloverbadges/nametag/render/NametagRenderer.java
+src/main/java/com/slyph/cloverbadges/nametag/render/TextDisplayNametagRenderer.java
+src/main/java/com/slyph/cloverbadges/nicknamecolor/NicknameColorDefinition.java
+src/main/java/com/slyph/cloverbadges/nicknamecolor/NicknameColorGrant.java
+src/main/java/com/slyph/cloverbadges/nicknamecolor/NicknameColorRegistry.java
+src/main/java/com/slyph/cloverbadges/nicknamecolor/PlayerNicknameColorService.java
+src/main/java/com/slyph/cloverbadges/nicknamecolor/preview/NicknamePreviewService.java
+src/main/java/com/slyph/cloverbadges/nicknamecolor/render/NicknameGradientRenderer.java
+src/main/java/com/slyph/cloverbadges/nicknamecolor/storage/NicknameColorStore.java
+src/main/java/com/slyph/cloverbadges/placeholder/CloverBadgesExpansion.java
+src/main/java/com/slyph/cloverbadges/player/BadgeGrant.java
+src/main/java/com/slyph/cloverbadges/player/BadgeToggleResult.java
+src/main/java/com/slyph/cloverbadges/player/PlayerBadgeData.java
+src/main/java/com/slyph/cloverbadges/player/PlayerBadgeService.java
+src/main/java/com/slyph/cloverbadges/storage/AsyncYamlWriter.java
+src/main/java/com/slyph/cloverbadges/storage/PlayerDataStore.java
+src/main/java/com/slyph/cloverbadges/util/ColorUtil.java
+src/main/java/com/slyph/cloverbadges/util/DurationParser.java
+src/main/resources/badges.yml
+src/main/resources/config.yml
+src/main/resources/gui.yml
+src/main/resources/message-colors.yml
+src/main/resources/messages.yml
+src/main/resources/nickname-colors.yml
+src/main/resources/plugin.yml
+src/smokeTest/java/com/slyph/cloverbadges/smoke/CloverBadgesSmokeTest.java
+src/smokeTest/resources/plugin.yml
 ```
 
 Main class:
@@ -782,7 +809,7 @@ CloverBadges uses Gradle.
 ### Requirements
 
 - JDK 25
-- Gradle 9.x
+- Gradle 9.1.0, provided by the checksum-verified wrapper
 - Git
 
 Clone the repository:
@@ -795,7 +822,7 @@ cd CloverBadges
 Build:
 
 ```bash
-gradle clean build
+./gradlew clean build
 ```
 
 The compiled JAR will be created in:
@@ -804,13 +831,44 @@ The compiled JAR will be created in:
 build/libs/CloverBadges-<version>.jar
 ```
 
-Current build dependencies are compile-only:
+Current production dependencies are compile-only. Lombok supplies annotations used by TAB API; annotation processing is not enabled and no dependency is bundled in the plugin:
 
 ```gradle
-compileOnly 'io.papermc.paper:paper-api:26.2.build.110-stable'
+compileOnly 'io.papermc.paper:paper-api:26.3.build.253-stable'
 compileOnly 'me.clip:placeholderapi:2.12.3'
 compileOnly 'com.github.NEZNAMY:TAB-API:6.1.2'
+compileOnly 'org.projectlombok:lombok:1.18.42'
 ```
+
+### Compatibility checks
+
+Build and prepare the disposable test plugin:
+
+```bash
+./gradlew clean build smokeTestJar --warning-mode=fail
+```
+
+Run the exact same production JAR on both supported runtimes:
+
+```bash
+python3 scripts/run_smoke.py --minecraft 26.2 --build 110
+python3 scripts/run_smoke.py --minecraft 26.3 --build 253
+python3 scripts/run_smoke.py --minecraft 26.3 --build 253 --placeholderapi --tab
+```
+
+Each invocation creates an isolated server bound to localhost, verifies the official Paper download checksum, runs the feature checks, shuts down, and starts again to verify saved ownership, selections and expiry. An existing nonempty directory is rejected. The integration flags download the full checksum-verified PlaceholderAPI 2.12.3 and TAB 6.2.1 releases. Additional integration JARs can be supplied with repeated `--plugin` arguments. Windows builds use `gradlew.bat`.
+
+The separate `CloverBadgesSmokeTest` JAR is a test fixture and must only be used on disposable servers. It requires `-Dcloverbadges.smoke=true` and shuts the test server down after each phase. It is never included in the production JAR.
+
+The fixture checks live item metadata and serialization, custom heads, all three menu pages, both nametag entity renderers, permissions, reload, optional PlaceholderAPI integration, and persistent data after a restart. Menu interactions use a synthetic player; the renderer check creates a disconnected server-side player. Actual client rendering, network visibility, and TAB's behavior for connected players still require an in-game check.
+
+Compile against the previous API as an additional source compatibility check:
+
+```bash
+./gradlew clean build -PpaperApiVersion=26.2.build.110-stable
+```
+
+The default build always targets the pinned 26.3 API. GitHub Actions runs the previous-API build and the runtime matrix on pushes and pull requests.
 
 GitHub Actions automatically builds the project on pushes and pull requests to `main`.
 
