@@ -85,7 +85,7 @@ public final class BadgeMenuManager {
                 page
         );
         BadgeMenuHolder holder = new BadgeMenuHolder(player.getUniqueId(), page);
-        Inventory inventory = Bukkit.createInventory(holder, size, ColorUtil.legacySection(title));
+        Inventory inventory = Bukkit.createInventory(holder, size, ColorUtil.component(title));
         holder.inventory(inventory);
         render(holder, player);
         player.openInventory(inventory);

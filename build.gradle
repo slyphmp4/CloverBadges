@@ -3,7 +3,10 @@ plugins {
 }
 
 group = 'com.slyph'
-version = '1.14.3'
+version = '1.14.4'
+
+def paperApiVersion = providers.gradleProperty('paperApiVersion').getOrElse('26.3.build.253-stable')
+def pluginVersion = version.toString()
 
 repositories {
     mavenCentral()
@@ -22,9 +25,10 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'io.papermc.paper:paper-api:26.2.build.110-stable'
+    compileOnly "io.papermc.paper:paper-api:${paperApiVersion}"
     compileOnly 'me.clip:placeholderapi:2.12.3'
     compileOnly 'com.github.NEZNAMY:TAB-API:6.1.2'
+    compileOnly 'org.projectlombok:lombok:1.18.42'
 }
 
 java {
@@ -39,12 +43,30 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 processResources {
+    inputs.property('version', pluginVersion)
     filesMatching('plugin.yml') {
-        expand(version: project.version)
+        expand(version: pluginVersion)
     }
 }
 
 jar {
     archiveBaseName = 'CloverBadges'
-    archiveVersion = project.version
+    archiveVersion = pluginVersion
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+sourceSets {
+    smokeTest {
+        compileClasspath += sourceSets.main.output + configurations.compileClasspath
+    }
+}
+
+tasks.register('smokeTestJar', Jar) {
+    dependsOn tasks.named('smokeTestClasses')
+    archiveBaseName = 'CloverBadgesSmokeTest'
+    archiveVersion = pluginVersion
+    from sourceSets.smokeTest.output
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
 }
